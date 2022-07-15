@@ -105,7 +105,7 @@ Google internal measurements)
 
 A site with an auth cookie name 'SID' wants to ensure that pages are evicted from BFCache if this cookie is deleted or changed.
 
-```
+```js
 backForwardCacheController.evictionCookies = ['SID'];
 ```
 
@@ -246,7 +246,7 @@ For example, the following JS snippet
 will cause any documents from this documents origin
 to be evicted if the SID cookie changes,
 
-```
+```js
 backForwardCacheController.evictionCookies = ['SID'];
 ```
 
@@ -311,7 +311,7 @@ The distinction might be confusing.
 We are open to suggestions for an alternative API
 that captures the range of options we want to represent.
 
-```
+```js
 backForwardCacheController.evictionCookies = null;
 ```
 
@@ -320,7 +320,7 @@ backForwardCacheController.evictionCookies = null;
 A CCNS document wants to give the browser an explicit signal
 that it can be BFCached regardless of cookie changes
 
-```
+```js
 backForwardCacheController.evictionCookies = [];
 ```
 

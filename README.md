@@ -20,11 +20,15 @@ with much feedback from
 We are particularly interested in feedback on
 
 * the functionality of evicting on cookie change vs the alternative of providing an explicit API to evict
-* moving towards caching documents with Cache-Control: No-Store
+* moving to caching documents with `Cache-Control: No-Store`
+* where this will go wrong that we have missed
+   * risky cases we have missed
+   * risky cases that are much more common than we think
+   * cases that are impossible to mitigate
 
 # Overview
 
-Documents with a [Cache-Control: no-store](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) header (_CCNS_)
+Documents with a [`Cache-Control: no-store`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) header (_CCNS_)
 are blocked from entering BFCache in practice on all browsers.
 Chrome measurements indicate that this prevents about 17% of all history navigations
 from being BFCached.

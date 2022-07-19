@@ -178,9 +178,18 @@ and so the proposed API applies to all cookies.
 
 In the past,
 Webkit [experimented][webkit-experimented] with allowing documents with CCNS to enter BFCache.
-This was discontinued because a user going back after logout
-would lead to a logged-in document being displayed
-- a serious problem on shared devices.
+This was discontinued after a serious privacy problem was reported.
+A bank was using shared tablets for customers.
+2 customers used the tablet in close succession.
+Customer-1 logged out.
+The bank staff gave the tablet to customer-2
+but instead of logging in,
+they went back
+and were presented customer-1's logged-in account.
+Customer-1's cookies had been cleared by the logout
+but the document for their account
+was still in BFCache.
+
 The [follow-on proposal][follow-on-proposal] allows us to avoid repeating this problem
 while extending BFCaching to many docs with CCNS.
 
@@ -440,6 +449,9 @@ regardless of whether the new API is used.
 
 If the API is not used,
 eviction is triggered on a change to _any_ HTTPS-only cookie.
+This will make it impossible to repeat the bank-tablet example above.
+However it does not remove all risks.
+
 We also add several other conditions that cause the BFCache to not be used
 
 * no BFCaching of CCNS documents
@@ -453,7 +465,6 @@ We also add several other conditions that cause the BFCache to not be used
   as they often have difficult-to-update software and/or shared devices
 * evict documents if the HTTP-Authentication state changes
   [ fergal to file a separate issue for this as it's an existing issue with BFCache ]
-
 
 ## Risks
 

@@ -195,7 +195,7 @@ it would cause more BFCache evictions.
 
 ### Allow CCNS documents to be BFCached when the API is used
 
-We take usage of the API
+We take usage of the [API][api]
 as a signal the the document can be BFCached
 even with the CCNS header
 because it will be evicted
@@ -217,11 +217,11 @@ it could greatly increase the number of documents that get into BFCache in the f
 
 This is the final step.
 
-With the API in place and in use,
-documents with CCNS that do not use the API
+With the [API][api] in place and in use,
+documents with CCNS that do not use the [API][api]
 would be allowed into BFCache
 and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie).
-This would happen some time after the API is stable.
+This would happen some time after the [API][api] is stable.
 It would need to be announced ahead of time
 and perhaps also use console warnings
 or other prompts to raise awareness.
@@ -230,9 +230,9 @@ There are some risks from this proposal
 but there are very large performance benefits from BFCache.
 We believe there should be some time
 and some effort to raise awareness
-between making the API above available and default BFCacheing of CCNS documents.
+between making the [API][api] available and default BFCacheing of CCNS documents.
 This will allow for more awareness
-and early opt-in by use of the cookie-monitoring API.
+and early opt-in by use of the cookie-monitoring [API][api].
 
 ### Carve-outs
 
@@ -244,7 +244,7 @@ We also add several other conditions that cause the BFCache to not be used
 * (possible) no BFCaching if a document has no HTTPS-only cookies
   as this would lead to unconditional caching
 * no BFCaching if JS is disabled in the browser
-  as the document has not had a chance to use the API
+  as the document has not had a chance to use the [API][api]
 * provide a disable switch to enterprises with managed browsers
   as they often have difficult-to-update software and/or shared devices
 * evict documents if the HTTP-Authentication state changes
@@ -318,7 +318,7 @@ and by only evicting on changes to secure cookies
 we may restore some pages that should not be restored.
 Our goal is to avoid exposing sensitive information
 and we expect that to be tied to secure cookies.
-These sites can use the new API
+These sites can use the new [API][api]
 and can also use any of the mitigitations for [stale information](#stale-information).
 
 [yahoo-japan-blog-post]: https://techblog.yahoo.co.jp/entry/2022010530253635/#:~:text=%E3%81%9D%E3%81%AE%E7%B5%90%E6%9E%9C%E3%80%81iOS%E3%81%AESafari%E3%81%A7%E3%81%AFPV/UB%E3%81%8C2%EF%BC%85%E4%BB%A5%E4%B8%8A%E5%90%91%E4%B8%8A%E3%81%99%E3%82%8B%E7%B5%90%E6%9E%9C%E3%81%8C%E5%BE%97%E3%82%89%E3%82%8C%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82BFCache%E3%81%AF%E3%83%96%E3%83%A9%E3%82%A6%E3%82%B6%E3%83%90%E3%83%83%E3%82%AF%E6%99%82%E3%81%AE%E4%BD%93%E9%A8%93%E3%81%8C%E6%9C%80%E9%81%A9%E5%8C%96%E3%81%95%E3%82%8C%E3%82%8B%E3%81%9F%E3%82%81%E3%80%81PV/UB%E3%81%AE%E3%82%88%E3%81%86%E3%81%AA%E6%8C%87%E6%A8%99%E3%82%82%E3%83%9D%E3%82%B8%E3%83%86%E3%82%A3%E3%83%96%E3%81%AB%E5%8B%95%E3%81%84%E3%81%9F%E3%81%AE%E3%81%A0%E3%81%A8%E6%8E%A8%E6%B8%AC%E3%81%95%E3%82%8C%E3%81%BE%E3%81%99%E3%80%82

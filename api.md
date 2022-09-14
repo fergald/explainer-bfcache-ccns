@@ -248,6 +248,18 @@ The choice to use a JS API rather than a header is currently somewhat arbitrary.
 It may be that we would want both.
 We will spend more time on this after validating the basic idea.
 
+## Cookie Metadata
+
+Instead of requiring pages to list the cookies which matter,
+cookies could declare themselves to be significant.
+
+This would mean that all pages of the site would be evicted
+when the cookies changes
+without any code changes.
+This is probably overly broad
+but it makes it impossible to have a problem
+whereby a page is forgotten.
+
 ## Manual Clearing
 
 Allow sites to clear their same-site BFCache entries,

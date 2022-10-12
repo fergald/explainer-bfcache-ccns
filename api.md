@@ -303,6 +303,117 @@ It's unclear that we _should_ support them if they exist
 as a HTTPS-only cookie is considered best practice for storing auth tokens,
 however nothing prevents this API from being extended to monitor other stores.
 
+# Security considerations
+
+This just adds another way for a page to be evicted from BFCache.
+It's conceiable that a.com could decrease b.com's BFCache hit rate,
+by causing b.com's cookies to change more frequently than normal.
+E.g. by repeatedly navigating an iframe to a URL of b.com's
+that changes cookies even without any user-interaction
+(e.g. /logout).
+b.com can mitigate this attack by
+- listing specific cookies (as recommended)
+- preventing embedding of URLs that change cookies without interaction
+  (already a good idea)
+
+# Privacy considerations
+
+This gives no new information to sites.
+If a page is evicted due to this API
+it means that a cookie for that site has been deleted/altered/expired.
+It cannot discover that this happens
+until the user returns to that page in a history traversal.
+At that point the site can discover the state of all of its cookies.
+
+# TAG Security and Privacy Questionnaire
+
+01.  What information might this feature expose to Web sites or other parties,
+     and for what purposes is that exposure necessary?
+
+> None.
+
+02.  Do features in your specification expose the minimum amount of information
+     necessary to enable their intended uses?
+
+> Yes.
+
+03.  How do the features in your specification deal with personal information,
+     personally-identifiable information (PII), or information derived from
+     them?
+
+> N/A.
+
+04.  How do the features in your specification deal with sensitive information?
+
+> N/A.
+
+05.  Do the features in your specification introduce new state for an origin
+     that persists across browsing sessions?
+
+> No.
+
+06.  Do the features in your specification expose information about the
+     underlying platform to origins?
+
+> No.
+
+07.  Does this specification allow an origin to send data to the underlying
+     platform?
+
+> No.
+
+08.  Do features in this specification enable access to device sensors?
+
+> No.
+
+09.  Do features in this specification enable new script execution/loading
+     mechanisms?
+
+> No.
+
+10.  Do features in this specification allow an origin to access other devices?
+
+> No.
+
+11.  Do features in this specification allow an origin some measure of control over
+     a user agent's native UI?
+
+> No.
+
+12.  What temporary identifiers do the features in this specification create or
+     expose to the web?
+
+> None.
+
+13.  How does this specification distinguish between behavior in first-party and
+     third-party contexts?
+
+> N/A.
+
+14.  How do the features in this specification work in the context of a browser’s
+     Private Browsing or Incognito mode?
+
+> No difference.
+
+15.  Does this specification have both "Security Considerations" and "Privacy
+     Considerations" sections?
+
+> Yes.
+
+16.  Do features in your specification enable origins to downgrade default
+     security protections?
+
+> No.
+
+17.  How does your feature handle non-"fully active" documents?
+
+> Yes (that is all it does).
+
+18.  What should this questionnaire have asked?
+
+> .
+
+
 [ccns-explainer]: README.md
 [ccns-advice]: https://codingshower.com/disable-bfcache/
 [secure-cookie]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies

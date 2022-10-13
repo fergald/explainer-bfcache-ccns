@@ -321,6 +321,119 @@ and we expect that to be tied to secure cookies.
 These sites can use the new [API][api]
 and can also use any of the mitigitations for [stale information](#stale-information).
 
+## Security considerations
+
+This introduces no new surfaces or features beyond existing BFCacheing.
+
+## Privacy considerations
+
+The concerns are divided into
+
+1. single-user devices where the user is surprised
+   by seeing (again) information that is now inaccessible
+2. shared devices where one user has taken steps (e.g. logout)
+   to prevent access to sensitive content by later users
+
+We believe, that for sites following good practices
+we have covered these.
+
+For sites not following good practices,
+there are mitigations described above.
+These all require action by the site.
+
+It seems unlikely that we can find a way
+to ensure that sites not following good practices
+will not be impacted by this change.
+
+# TAG Security and Privacy Questionnaire
+
+01.  What information might this feature expose to Web sites or other parties,
+     and for what purposes is that exposure necessary?
+
+> No new information is exposed by this.
+
+02.  Do features in your specification expose the minimum amount of information
+     necessary to enable their intended uses?
+
+> Yes.
+
+03.  How do the features in your specification deal with personal information,
+     personally-identifiable information (PII), or information derived from
+     them?
+
+> N/A.
+
+04.  How do the features in your specification deal with sensitive information?
+
+>
+
+05.  Do the features in your specification introduce new state for an origin
+     that persists across browsing sessions?
+
+> No.
+
+06.  Do the features in your specification expose information about the
+     underlying platform to origins?
+
+> No.
+
+07.  Does this specification allow an origin to send data to the underlying
+     platform?
+
+> No.
+
+08.  Do features in this specification enable access to device sensors?
+
+> No.
+
+09.  Do features in this specification enable new script execution/loading
+     mechanisms?
+
+> No.
+
+10.  Do features in this specification allow an origin to access other devices?
+
+> No.
+
+11.  Do features in this specification allow an origin some measure of control over
+     a user agent's native UI?
+
+> No.
+
+12.  What temporary identifiers do the features in this specification create or
+     expose to the web?
+
+> None.
+
+13.  How does this specification distinguish between behavior in first-party and
+     third-party contexts?
+
+> N/A.
+
+14.  How do the features in this specification work in the context of a browser’s
+     Private Browsing or Incognito mode?
+
+> No difference.
+
+15.  Does this specification have both "Security Considerations" and "Privacy
+     Considerations" sections?
+
+> Yes.
+
+16.  Do features in your specification enable origins to downgrade default
+     security protections?
+
+> No.
+
+17.  How does your feature handle non-"fully active" documents?
+
+> It is only concerned with these documents.
+
+18.  What should this questionnaire have asked?
+
+> .
+
+
 [yahoo-japan-blog-post]: https://techblog.yahoo.co.jp/entry/2022010530253635/#:~:text=%E3%81%9D%E3%81%AE%E7%B5%90%E6%9E%9C%E3%80%81iOS%E3%81%AESafari%E3%81%A7%E3%81%AFPV/UB%E3%81%8C2%EF%BC%85%E4%BB%A5%E4%B8%8A%E5%90%91%E4%B8%8A%E3%81%99%E3%82%8B%E7%B5%90%E6%9E%9C%E3%81%8C%E5%BE%97%E3%82%89%E3%82%8C%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82BFCache%E3%81%AF%E3%83%96%E3%83%A9%E3%82%A6%E3%82%B6%E3%83%90%E3%83%83%E3%82%AF%E6%99%82%E3%81%AE%E4%BD%93%E9%A8%93%E3%81%8C%E6%9C%80%E9%81%A9%E5%8C%96%E3%81%95%E3%82%8C%E3%82%8B%E3%81%9F%E3%82%81%E3%80%81PV/UB%E3%81%AE%E3%82%88%E3%81%86%E3%81%AA%E6%8C%87%E6%A8%99%E3%82%82%E3%83%9D%E3%82%B8%E3%83%86%E3%82%A3%E3%83%96%E3%81%AB%E5%8B%95%E3%81%84%E3%81%9F%E3%81%AE%E3%81%A0%E3%81%A8%E6%8E%A8%E6%B8%AC%E3%81%95%E3%82%8C%E3%81%BE%E3%81%99%E3%80%82
 [page-show-event-handler]: https://web.dev/bfcache/#update-stale-or-sensitive-data-after-bfcache-restore
 [webkit-experimented]: https://github.com/whatwg/html/issues/5744#issuecomment-661997090

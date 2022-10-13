@@ -407,7 +407,7 @@ At that point the site can discover the state of all of its cookies.
 
 17.  How does your feature handle non-"fully active" documents?
 
-> Yes (that is all it does).
+> It is only concerned with these documents.
 
 18.  What should this questionnaire have asked?
 

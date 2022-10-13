@@ -147,7 +147,7 @@ While the API is a straw person, there are some specific goals:
 * allow for an explicit signal that eviction should not be triggered
   just because cookies change
 
-# API Non-goals
+### API Non-goals
 
 Provide a mechanism to unconditionally prevent documents from being BFCached.
 There is [broad agreement ](https://github.com/whatwg/html/issues/5744)
@@ -232,9 +232,9 @@ or "evict if any cookies on this path change".
 Until there is a clear use case,
 this will remain just a note on a possible extension of the API.
 
-# Considered alternatives
+## Considered alternatives
 
-## Header
+### Header
 
 Sites could also specify the same information in an HTTP header.
 
@@ -248,7 +248,7 @@ The choice to use a JS API rather than a header is currently somewhat arbitrary.
 It may be that we would want both.
 We will spend more time on this after validating the basic idea.
 
-## Cookie Metadata
+### Cookie Metadata
 
 Instead of requiring pages to list the cookies which matter,
 cookies could declare themselves to be significant.
@@ -260,7 +260,7 @@ This is probably overly broad
 but it makes it impossible to have a problem
 whereby a page is forgotten.
 
-## Manual Clearing
+### Manual Clearing
 
 Allow sites to clear their same-site BFCache entries,
 e.g. `Clear-Site-Data: "cache"` (or adding a new value like `"bfcache"`)
@@ -294,7 +294,7 @@ however it has some downsides
   it does not require ensuring that every path that leads to a significant state change
   also clears BFCache
 
-## Triggering on something other than cookies
+### Triggering on something other than cookies
 
 If there are sites which store authentication tokens in IndexedDB or private filesystem,
 we could perhaps evict on changes to certain keys or files.
@@ -303,7 +303,7 @@ It's unclear that we _should_ support them if they exist
 as a HTTPS-only cookie is considered best practice for storing auth tokens,
 however nothing prevents this API from being extended to monitor other stores.
 
-# Security considerations
+## Security considerations
 
 This just adds another way for a page to be evicted from BFCache.
 It's conceiable that a.com could decrease b.com's BFCache hit rate,
@@ -316,7 +316,7 @@ b.com can mitigate this attack by
 - preventing embedding of URLs that change cookies without interaction
   (already a good idea)
 
-# Privacy considerations
+## Privacy considerations
 
 This gives no new information to sites.
 If a page is evicted due to this API
@@ -325,7 +325,7 @@ It cannot discover that this happens
 until the user returns to that page in a history traversal.
 At that point the site can discover the state of all of its cookies.
 
-# TAG Security and Privacy Questionnaire
+## TAG Security and Privacy Questionnaire
 
 01.  What information might this feature expose to Web sites or other parties,
      and for what purposes is that exposure necessary?

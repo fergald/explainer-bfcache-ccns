@@ -48,12 +48,13 @@ CCNS will cause BFCache misses for only about 1% of history navigations.
 
 We propose [APIs][api]
 that give page authors the ability to evict pages from BFCache,
-one based on monitoring cookies (preferred),
+one based on monitoring cookies and storage (preferred),
 the other a simple, explicit eviction API.
 With either of these available
 we believe browsers can safely make a [follow-on change][follow-on-proposal]
 to allow most CCNS documents into BFCache by monitoring cookies
-and evicting documents when secure cookies change.
+and usage of the `Authentication` header
+and then evicting documents when secure cookies change.
 
 There remain some situations
 where caching a CCNS page could be a problem.
@@ -88,6 +89,12 @@ Google internal measurements)
 
 ## Background
 
+### Authentication
+
+See the [Authentication section in the API proposal][authentication]
+for an explanation of the use of cookies, tokens
+and the `Authentication` header.
+
 ### BFCache
 
 BFCache is a "cache" in browsers
@@ -100,30 +107,6 @@ There are many things that prevent browsers from doing this with a given documen
 too much time having passed since navigating away).
 
 [This web.dev article](https://web.dev/bfcache) has more information on BFCache.
-
-
-### Authentication and cookies
-
-Best practice for authentication has been,
-for a long time,
-to hold a token in an HTTPS-only cookie
-so that all requests present this token.
-Deleting this token or cookie deauthenticates the browser
-and usually corresponds to a logout.
-The same outcome applies when the token expires.
-Replacing the token with a new value
-might also correspond to a change in authentication state
-or it may just be a refresh of the token
-or other neutral change.
-Conservatively, we can consider any change to be a significant authentication change
-even if it does not correspond to a logout.
-
-### Other cookies
-
-Other non-auth or non-HTTPS-only cookies may also be significant to a page
-e.g. representing contents of shopping carts.
-Changes to these may also imply that pages in BFCache
-have outdated/incorrect contents.
 
 ### Current interactions between BFCache and CCNS
 
@@ -179,12 +162,12 @@ Getting to the point where we can BFCache
 all documents with CCNS
 takes several steps.
 
-### New API to monitor cookies
+### New API to monitor authentication impacting events
 
 We propose an [API][api] that would give documents more control over when they are evicted from BFCache
 by allowing them to declare
 that certain events
-(change/delete/expire specified cookies)
+(change/delete/expire specified cookies or storage keys)
 will trigger eviction.
 This API has some merit on its own,
 as a way to avoid problems with BFCache
@@ -200,6 +183,14 @@ as a signal that the document can be BFCached
 even with the CCNS header
 because it will be evicted
 when relevant state changes.
+
+The page can be cached with CCNS if both of the following are true
+
+- the API has been used to declare relevant cookies.
+- either of
+   - the `Authentication` header has not been used.
+   - the `Authentication` header has been used
+     and the API has been used to declare where tokens are stored.
 
 This allows sites to
 
@@ -217,10 +208,13 @@ it could greatly increase the number of documents that get into BFCache in the f
 
 This is the final step.
 
-With the [API][api] in place and in use,
-documents with CCNS that do not use the [API][api]
+With the [API][api] in place and in use for some time,
+we would switch to a state where
+documents with CCNS that do not use the `Authentication` header
+and do not use the [API][api]
 would be allowed into BFCache
 and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie).
+
 This would happen some time after the [API][api] is stable.
 It would need to be announced ahead of time
 and perhaps also use console warnings
@@ -264,28 +258,6 @@ Some legacy systems could use tokens in the URL instead of cookies,
 even when cookies are not disabled.
 This should be extremely rare,
 if it exists at all.
-
-### 3rd-party Auth Tokens
-
-A site may make RPCs to 3rd-party services directly from the browser
-and bring users through 3rd-party auth flows in order to collect a token to authorise these RPCs.
-The token would be held in memory in JS
-and manually attached to RPC requests.
-If there was a site which does this
-but has no login/cookies of its own
-and also has no coordination between pages
-to ensure that all pages log out of 3rd-parties if one does
-then this site could surprise the user as follows
-
-- page of site.com acquires information using 3rd-party token
-- user navigates away (page goes into BFCache)
-- user observes another page of site1.com
-  that does not have a valid token
-- user returns to BFCached page
-- user is surprised to find that BFCached page still has access to 3rd-party information
-
-We know of no sites like this
-and the scenario is somewhat convoluted.
 
 ### Server-side logout
 
@@ -440,3 +412,4 @@ will not be impacted by this change.
 [follow-on-proposal]: #follow-on-caching-ccns-documents-by-default
 
 [api]: api.md
+[authentication]: api.md#authentication

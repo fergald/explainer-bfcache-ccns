@@ -1,4 +1,4 @@
-# Proposal: give sites the ability to evict documents from BFCache when cookies change
+# Proposal: give sites the ability to evict documents from BFCache when cookies or storage keys change
 
 ## Context
 
@@ -12,16 +12,82 @@ see the accompanying [explainer][ccns-explainer].
 
 We propose to add an API that allows a document to declare
 that it must not be restored from BFCache
-if certain cookies change while it is in BFCache.
+if certain cookies or storage keys change while it is in BFCache.
 
 For example, the following JS snippet
 will cause any documents from this document's origin
 which are currently in BFCache,
-to be evicted if the SID cookie changes,
+to be evicted if the 'SID' cookie changes,
 
 ```js
-backForwardCacheController.evictionCookies = ['SID'];
+backForwardCacheController.evictionSignals.cookies = ['SID'];
 ```
+
+Similarly, the following JS snippet
+will cause any documents from this document's origin
+which are currently in BFCache,
+to be evicted
+if the value of the key 'authToken' in session storage changes,
+
+```js
+backForwardCacheController.evictionSignals.sessionStorage = ['authToken'];
+```
+
+## Background
+
+### Authentication
+
+#### Secure cookies
+
+Best practice for authentication has been,
+for a long time,
+to hold a token in an HTTPS-only cookie
+so that all requests present this token.
+Deleting this cookie deauthenticates the browser
+and usually corresponds to a logout.
+The same outcome applies when the cookie expires.
+Replacing the cookie with a new value
+might also correspond to a change in authentication state
+or it may just be a refresh of the token
+or other neutral change.
+
+Conservatively, we can consider any change
+to be a significant authentication change
+even if it does not correspond to a logout.
+
+#### Other cookies
+
+Other non-auth or non-HTTPS-only cookies may also be significant to a page
+e.g. representing contents of shopping carts.
+Changes to these may also imply that pages in BFCache
+have outdated/incorrect contents.
+
+#### `Authentication` header and tokens
+
+Authentication may also happen via 3rd parties,
+resulting in tokens that are presented
+via the `Authentication` header.
+For example, federated sign-in
+(sign-in with Google/Twitter/Facebook/etc)
+provides a token that can then be presented on later RPCs.
+There are sites that use this as their only form of authentication
+(with no use of cookies).
+Typically they are single-page apps since,
+without cookies,
+HTTP requests resulting from navigation
+would be unauthenticated.
+
+Best practice for tokens like this
+is to write them to site-private storage,
+e.g. LocalStorage, SessionStorage, IndexedDB.
+The token is read from storage when attaching to each RPC.
+This ensures that a logout occurring in another tab
+or in the same tab but in unrelated code
+will result in fully deauthenticating the user.
+
+Any use of the `Authentication` header
+indicates that the page is now probably displaying information
+that could only be acquired with authentication.
 
 ## Motivation
 
@@ -68,22 +134,22 @@ but updating a site to do this is non-trivial.
 
 ## Proposed solution
 
-Allow sites to declare that certain cookies
+Allow sites to declare that certain state changes
+in cookies or storage
 should cause the site's documents to be evicted from BFCache.
 
-Cookies are the best practice way to store authentication tokens.
-For sites that use them,
-a change in authentication state will be accompanied by a change in cookies.
-Other cookies beyond authentication
-may also be relevant to whether a document should be evicted,
-e.g. cookies for shopping cart contents.
+When authentication state changes,
+a site using cookies for authentication
+will see a change in cookies.
+A site using the `Authentication` header
+should see a change in stored token(s).
 
-Evicting when cookies change strikes a balance
-between impact and ease of implementation.
-Declaring a set of relevant cookies is low overhead.
-Evicting when cookies change
-ensures that documents are not restored from BFCache
+Evicting when cookies or storage changes strikes a balance
+between impact and ergonomics for site developers.
+Declaring a set of relevant cookies or storage keys is low overhead.
+It ensures that documents are not restored from BFCache
 after authentication state changes.
+
 Evicting when cookies change
 causes a relatively low rate of eviction.
 Chrome's analysis shows that fewer than 50% of documents
@@ -91,6 +157,17 @@ currently blocked from BFCache by the CCNS header
 have any cookie change within 3.5 minutes of entering BFCache.
 Fewer than 5% have any [secure cookie][secure-cookie] change
 in that time.
+
+We do not have any statistics
+on the frequency of changes to stored authentication tokens
+since we cannot know which stored items
+are authentication tokens.
+We will measure how often the `Authentication` header
+is seen on pages with CCNS
+and what impact it would have
+if we were to continue to block cacheing
+of CCNS pages
+when we see that header used.
 
 ### Interaction with CCNS header
 
@@ -112,40 +189,66 @@ At this stage,
 we are more interested in feedback about the fundamental idea
 than about the specifics of the API (naming, shape etc).
 
+The API presents a `backForwardCacheController.evictionSignals` object
+which has fields for registering cookies and other storage mechanisms:
+- cookies
+- SessionStorage
+- LocalStorage
+- IndexedDB
+
+For cookies, SessionStorage and LocalStorage,
+items to monitor for changes
+are identified by a single key.
+For IndexedDB, a pair of database name and store name
+identify the item to be monitored.
+It is unclear if this is sufficient for all uses of IndexedDB for token storage.
+It assumes that tokens will be stored in a store dedicated to token storage.
+If the store is also used for other data
+then we will over-evict.
+
 For example, the following JS snippet
 will cause any documents from this document's origin
-to be evicted if the SID cookie changes,
+to be evicted if the SID cookie changes
+or if there is a change to the 'tokens' store
+in the 'auth' database of IndexedDB.
 
 ```js
-backForwardCacheController.evictionCookies = ['SID'];
+backForwardCacheController.evictionSignals.cookies = ['SID'];
+backForwardCacheController.evictionSignals.indexedDB = [['auth', 'tokens']];
 ```
 
 ### Details
 
-When `backForwardCacheController.evictionCookies` is set to a list
+When `backForwardCacheController.evictionSignals.[some field]` is set to a list
 
 * if the document enters BFCache,
-  the browser must monitor the listed cookies
+  the browser must monitor the listed cookies or keys
   (the list may be empty)
   and if any change occurs in those cookies,
   (modify/delete/expire),
+  or storage keys (delete/set),
   the document should be evicted from BFCache.
-* the browser can consider the API to _have_ been used.
 
-When `backForwardCacheController.evictionCookies` is left unset
+When `backForwardCacheController.evictionSignals.cookies` is left unset
 or set to `null` or `undefined`.
 
 * no cookie-based eviction should occur.
-* the browser can consider the API to _have not_ been used.
+* the browser can consider the API to _have not_ been used for cookies.
+
+When the `localStorage`, `sessionStorage` and `indexedDB` fields
+have all been left unset or set to `null` or `undefined`.
+
+* no storage-based eviction should occur.
+* the browser can consider the API to _have not_ been used for tokens.
 
 ### API Goals
 
 While the API is a straw person, there are some specific goals:
 
-* list 1 or more cookies
+* list 1 or more cookies/keys
 * distinguish between the API having been used or not
 * allow for an explicit signal that eviction should not be triggered
-  just because cookies change
+  just because cookies/keys change
 
 ### API Non-goals
 
@@ -162,7 +265,7 @@ as this is too easy to overuse/use incorrectly.
 2. The user goes to a.com/foo.
 3. This runs the following JS.
 ```js
-backForwardCacheController.evictionCookies = ['SID'];
+backForwardCacheController.evictionSignals.cookies = ['SID'];
 ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
@@ -186,7 +289,7 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-backForwardCacheController.evictionCookies = null;
+backForwardCacheController.evictionSignals.cookies = null;
 ```
 
 #### **Scenario: Explicitly monitor no cookies**
@@ -198,27 +301,17 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-backForwardCacheController.evictionCookies = [];
+backForwardCacheController.evictionSignals.cookies = [];
 ```
 
 #### **Scenario: Programmatic flushing of BFCache**
 
 This may be considered an abuse of the API
 but absent another API to more directly provide this,
-we may see sites setting a cookie
+we may see sites setting a cookie or other item
 that serves no other purpose than to be a sentinel,
 which, when altered,
 causes BFCached documents from the site to be evicted.
-
-This could be used when an authentication token is held in shared storage.
-Holding a token in IndexedDB or private filesystem
-is not best practice but may occur,
-e.g. a 3rd-party auth token.
-If the document intentionally drops all references to the token
-to effectively log out,
-it can also change the sentinel cookie
-to ensure that any BFCached documents in the logged-in state
-are not restored from BFCache.
 
 #### **Possible Scenario: Match a class of cookies**
 
@@ -294,19 +387,10 @@ however it has some downsides
   it does not require ensuring that every path that leads to a significant state change
   also clears BFCache
 
-### Triggering on something other than cookies
-
-If there are sites which store authentication tokens in IndexedDB or private filesystem,
-we could perhaps evict on changes to certain keys or files.
-We have not proposed this since we are unaware of any concrete examples of this.
-It's unclear that we _should_ support them if they exist
-as a HTTPS-only cookie is considered best practice for storing auth tokens,
-however nothing prevents this API from being extended to monitor other stores.
-
 ## Security considerations
 
 This just adds another way for a page to be evicted from BFCache.
-It's conceiable that a.com could decrease b.com's BFCache hit rate,
+It's conceivable that a.com could decrease b.com's BFCache hit rate,
 by causing b.com's cookies to change more frequently than normal.
 E.g. by repeatedly navigating an iframe to a URL of b.com's
 that changes cookies even without any user-interaction

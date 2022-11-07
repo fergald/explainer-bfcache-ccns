@@ -189,7 +189,7 @@ will trigger eviction.
 This API has some merit on its own,
 as a way to avoid problems with BFCache
 without blocking it entirely.
-However there has been no demand for it
+However there has been no demand for it from developers
 and on its own
 it would cause more BFCache evictions.
 

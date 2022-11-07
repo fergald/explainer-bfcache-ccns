@@ -196,7 +196,7 @@ it would cause more BFCache evictions.
 ### Allow CCNS documents to be BFCached when the API is used
 
 We take usage of the [API][api]
-as a signal the the document can be BFCached
+as a signal that the document can be BFCached
 even with the CCNS header
 because it will be evicted
 when relevant state changes.

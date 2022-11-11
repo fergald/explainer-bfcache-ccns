@@ -189,8 +189,9 @@ At this stage,
 we are more interested in feedback about the fundamental idea
 than about the specifics of the API (naming, shape etc).
 
-The API presents a `backForwardCacheController.evictionSignals` object
+The API presents a `inactiveDocumentController.invalidationSignals` object
 which has fields for registering cookies and other storage mechanisms:
+
 - cookies
 - SessionStorage
 - LocalStorage

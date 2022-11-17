@@ -1,4 +1,4 @@
-# Proposal: give sites the ability to evict documents from BFCache when cookies or storage keys change
+# Proposal: give sites the ability to invalidate documents in BFCache or prerendering when cookies or storage keys change
 
 ## Context
 
@@ -8,32 +8,96 @@ with the `Cache-Control: no-store` (_CCNS_) header.
 For full details on that,
 see the accompanying [explainer][ccns-explainer].
 
+It is also motivated by concerns
+about leaking sensitive information when prerendering pages.
+
+## Terminology
+
+Conventionally,
+when talking about pages in BFCache,
+the term "eviction" is used
+to mean that the page is removed from the cache
+and will never be restored.
+Conventionally,
+when talking about prerendering,
+the term "cancellation" if used
+to mean that the browser stops the prerendering process
+discards the results
+which are never presented to the user.
+In both cases,
+the essence is that an inactive document
+is prevented from ever becoming active
+and being presented to the user.
+
+In this document,
+we will talk about "invalidation" of inactive documents
+to cover both eviction from BFCache
+and cancellation of prerendering.
+
 ## Overview
 
 We propose to add an API that allows a document to declare
-that it must not be restored from BFCache
-if certain cookies or storage keys change while it is in BFCache.
+that it must not be invalidated
+if certain cookies or storage keys change while it is in inactive.
 
 For example, the following JS snippet
 will cause any documents from this document's origin
-which are currently in BFCache,
-to be evicted if the 'SID' cookie changes,
+which are currently inactive
+to be invalidated
+if the 'SID' cookie changes,
 
 ```js
-backForwardCacheController.evictionSignals.cookies = ['SID'];
+inactiveDocumentController.invalidationSignals.cookies = ['SID'];
 ```
 
 Similarly, the following JS snippet
 will cause any documents from this document's origin
-which are currently in BFCache,
-to be evicted
+which are currently inactive
+to be invalidated
 if the value of the key 'authToken' in session storage changes,
 
 ```js
-backForwardCacheController.evictionSignals.sessionStorage = ['authToken'];
+inactiveDocumentController.invalidationSignals.sessionStorage = ['authToken'];
 ```
 
 ## Background
+
+### BFCache
+
+BFCache is a "cache" in browsers
+such that when the user navigates away from a top-level document,
+the browser may preserve that document in a frozen state
+and if the user traverses history back to that document's history entry,
+the browser may just unfreeze the preserved document.
+
+This provides a significant performance boost
+on these navigations
+at the cost of not refreshing the content.
+Depending on the nature of the content,
+not refreshing the content may be harmless,
+inconvenient or a serious problem
+(e.g. the user has logged out
+but the page still contains logged-in content).
+
+[This web.dev article](https://web.dev/bfcache) has more information on BFCache.
+
+### Prerendering
+
+Prerendering is where the browser decides
+that the user is likely to navigate to a URL
+and (in the background) initiates the process of
+fetching the URL and rendering the content.
+If the user does actually navigate to that URL
+the browser can present the renderered content instantly.
+
+Similarly to BFCache,
+a prerendered page is based on content
+that was fetched some time in the past.
+Similarly to BFCache,
+this may be harmless
+or it may be a serious problem.
+
+[This web.dev article](https://web.dev/speculative-prerendering/) has more information on prerendering.
 
 ### Authentication
 
@@ -59,7 +123,7 @@ even if it does not correspond to a logout.
 
 Other non-auth or non-HTTPS-only cookies may also be significant to a page
 e.g. representing contents of shopping carts.
-Changes to these may also imply that pages in BFCache
+Changes to these may also imply that inactive pages in BFCache or prerendering
 have outdated/incorrect contents.
 
 #### `Authentication` header and tokens
@@ -89,7 +153,17 @@ Any use of the `Authentication` header
 indicates that the page is now probably displaying information
 that could only be acquired with authentication.
 
-## Motivation
+## Problem we are solving
+
+When a document is in BFCache or prerendering for some time
+and is then made visible,
+the contents of the document may be out of date
+or worse, the document may contain sensitive information
+that the current user should not have access to,
+e.g. if a logout occurred while the document was in BFCache.
+
+Our goal is to make it easy for sites to avoid these problems
+while still allowing and maximising usage of BFCache and prerendering.
 
 While this API could be useful on its own,
 the main motivation for it is as a prerequisite
@@ -97,19 +171,6 @@ for safely enabling BFCaching of pages
 with the `Cache-Control: no-store` (_CCNS_) header.
 CCNS is one of the largest blockers of BFCache usage
 and unblocking it would provide a large performance benefit to users.
-
-## Problem we are solving
-
-When a document is in BFCache for some time
-and is then restored
-and made visible again,
-the contents of the document may be out of date
-or worse, the document may contain sensitive information
-that the current user should not have access to,
-e.g. if a logout occurred while the document was in BFCache.
-
-Our goal is to make it easy for sites to avoid these problems
-while still allowing and maximising usage of BFCache.
 
 ## Existing solutions
 
@@ -136,7 +197,7 @@ but updating a site to do this is non-trivial.
 
 Allow sites to declare that certain state changes
 in cookies or storage
-should cause the site's documents to be evicted from BFCache.
+should cause the site's inactive documents to be invalidated.
 
 When authentication state changes,
 a site using cookies for authentication
@@ -144,19 +205,22 @@ will see a change in cookies.
 A site using the `Authentication` header
 should see a change in stored token(s).
 
-Evicting when cookies or storage changes strikes a balance
+Invalidating when cookies or storage changes strikes a balance
 between impact and ergonomics for site developers.
 Declaring a set of relevant cookies or storage keys is low overhead.
-It ensures that documents are not restored from BFCache
+It ensures that stale documents are not presented to the user
 after authentication state changes.
 
-Evicting when cookies change
-causes a relatively low rate of eviction.
+Invalidating when cookies change
+causes a relatively low rate of invalidation.
 Chrome's analysis shows that fewer than 50% of documents
 currently blocked from BFCache by the CCNS header
 have any cookie change within 3.5 minutes of entering BFCache.
 Fewer than 5% have any [secure cookie][secure-cookie] change
 in that time.
+
+We do not have any statistics
+on how often prerendering would be cancelled.
 
 We do not have any statistics
 on the frequency of changes to stored authentication tokens
@@ -169,7 +233,7 @@ if we were to continue to block cacheing
 of CCNS pages
 when we see that header used.
 
-### Interaction with CCNS header
+### Interaction with CCNS header and BFCache
 
 As mentioned above,
 this API could be useful on its own.
@@ -205,41 +269,41 @@ identify the item to be monitored.
 It is unclear if this is sufficient for all uses of IndexedDB for token storage.
 It assumes that tokens will be stored in a store dedicated to token storage.
 If the store is also used for other data
-then we will over-evict.
+then we will over-invalidate.
 
 For example, the following JS snippet
-will cause any documents from this document's origin
-to be evicted if the SID cookie changes
+will cause any inactive documents from this document's origin
+to be invalidated if the SID cookie changes
 or if there is a change to the 'tokens' store
 in the 'auth' database of IndexedDB.
 
 ```js
-backForwardCacheController.evictionSignals.cookies = ['SID'];
-backForwardCacheController.evictionSignals.indexedDB = [['auth', 'tokens']];
+inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+inactiveDocumentController.invalidationSignals.indexedDB = [['auth', 'tokens']];
 ```
 
 ### Details
 
-When `backForwardCacheController.evictionSignals.[some field]` is set to a list
+When `inactiveDocumentController.invalidationSignals.[some field]` is set to a list
 
-* if the document enters BFCache,
+* if a document is in BFCache or prerendering,
   the browser must monitor the listed cookies or keys
   (the list may be empty)
   and if any change occurs in those cookies,
   (modify/delete/expire),
   or storage keys (delete/set),
-  the document should be evicted from BFCache.
+  the document should be invalidated.
 
-When `backForwardCacheController.evictionSignals.cookies` is left unset
+When `inactiveDocumentController.invalidationSignals.cookies` is left unset
 or set to `null` or `undefined`.
 
-* no cookie-based eviction should occur.
+* no cookie-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for cookies.
 
 When the `localStorage`, `sessionStorage` and `indexedDB` fields
 have all been left unset or set to `null` or `undefined`.
 
-* no storage-based eviction should occur.
+* no storage-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for tokens.
 
 ### API Goals
@@ -248,7 +312,7 @@ While the API is a straw person, there are some specific goals:
 
 * list 1 or more cookies/keys
 * distinguish between the API having been used or not
-* allow for an explicit signal that eviction should not be triggered
+* allow for an explicit signal that invalidation should not be triggered
   just because cookies/keys change
 
 ### API Non-goals
@@ -262,11 +326,12 @@ as this is too easy to overuse/use incorrectly.
 
 #### **Scenario: Monitor cookies**
 
+##### For BFCache
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
 2. The user goes to a.com/foo.
 3. This runs the following JS.
    ```js
-backForwardCacheController.evictionSignals.cookies = ['SID'];
+inactiveDocumentController.invalidationSignals.cookies = ['SID'];
    ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
@@ -275,6 +340,22 @@ backForwardCacheController.evictionSignals.cookies = ['SID'];
 This results in a.com/foo being evicted at step 5,
 so step 6 is a fresh load of a.com/foo
 instead of restoring a.com/foo as it was while logged in.
+
+##### For Prerendering
+
+1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
+1. The user goes to a.com/foo while logged in
+1. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
+   ```js
+inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   ```
+1. The user opens a new tab to a.com/bar
+1. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
+1. The user switches back to their first tab, which is displaying a.com/foo
+1. The user clicks a link to a.com/foo-page-2.
+
+Because the prerender was discarded,
+they correctly see a logged-out view of a.com/foo-page-2.
 
 #### **Scenario: Behave as before with regard to BFCache**
 
@@ -290,19 +371,20 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-backForwardCacheController.evictionSignals.cookies = null;
+inactiveDocumentController.invalidationSignals.cookies = null;
 ```
 
 #### **Scenario: Explicitly monitor no cookies**
 
 A document wants to signal
-that it can be BFCached regardless of cookie changes.
+that it can remain in BFCache or prerendering
+regardless of cookie changes.
 This use case makes sense
 in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-backForwardCacheController.evictionSignals.cookies = [];
+inactiveDocumentController.invalidationSignals.cookies = [];
 ```
 
 #### **Scenario: Programmatic flushing of BFCache**
@@ -320,8 +402,8 @@ The API does not support this
 and it's unclear that it's needed
 (certainly in V1)
 but a site may want to say something like,
-"evict if any HTTPS-only cookies change"
-or "evict if any cookies on this path change".
+"invalidate if any HTTPS-only cookies change"
+or "invalidate if any cookies on this path change".
 
 Until there is a clear use case,
 this will remain just a note on a possible extension of the API.
@@ -347,16 +429,16 @@ We will spend more time on this after validating the basic idea.
 Instead of requiring pages to list the cookies which matter,
 cookies could declare themselves to be significant.
 
-This would mean that all pages of the site would be evicted
+This would mean that all pages of the site would be invalidated
 when the cookies changes
 without any code changes.
 This is probably overly broad
 but it makes it impossible to have a problem
 whereby a page is forgotten.
 
-### Manual Clearing
+### Manual Invalidation
 
-Allow sites to clear their same-site BFCache entries,
+Allow sites to invalidate their inactive documents,
 e.g. `Clear-Site-Data: "cache"` (or adding a new value like `"bfcache"`)
 or adding an explicit JS API.
 An explicit API has been [discussed before](https://github.com/whatwg/html/issues/5744).
@@ -369,20 +451,20 @@ however it has some downsides
   indicates that CCNS is often mis-understood and overused.
   If we provide another easy way to continue to do the same
   it may be used thoughtlessly.
-  Until a blanket evict is confirmed to be really needed for specific situations,
+  Until a blanket invalidation API is confirmed to be really needed for specific situations,
   it's preferable to leave the opportunity for the ecosystem
   to push back with concrete scenarios
   for the cases where the current proposal might not be enough in its current shape.
 * it provides no signal that can be used to opt in to BFCacheing of CCNS pages
   and so, no CCNS pages could be BFCached until we implement the follow-on.
   This means that until the follow-on,
-  this API would only increase evictions.
+  this API would only increase invalidations.
   It also means that sites with CCNS pages
   cannot effectively trial it before the follow-on
   - their CCNS pages will not be cached.
 * with the cookie API,
-  sites can lower their eviction rate by listing a small set of cookies,
-  which will prevent over-eviction in the follow-on
+  sites can lower their invalidation rate by listing a small set of cookies,
+  which will prevent over-invalidation in the follow-on
 * pages that use the cookie API will see no change when the follow-on lands
 * the cookie API is set-and-forget
   it does not require ensuring that every path that leads to a significant state change
@@ -390,7 +472,7 @@ however it has some downsides
 
 ## Security considerations
 
-This just adds another way for a page to be evicted from BFCache.
+This just adds another way for a document to be invalidated.
 It's conceivable that a.com could decrease b.com's BFCache hit rate,
 by causing b.com's cookies to change more frequently than normal.
 E.g. by repeatedly navigating an iframe to a URL of b.com's
@@ -404,7 +486,7 @@ b.com can mitigate this attack by
 ## Privacy considerations
 
 This gives no new information to sites.
-If a page is evicted due to this API
+If a document is invalidated due to this API
 it means that a cookie for that site has been deleted/altered/expired.
 It cannot discover that this happens
 until the user returns to that page in a history traversal.

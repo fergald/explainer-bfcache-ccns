@@ -326,6 +326,7 @@ as this is too easy to overuse/use incorrectly.
 
 #### **Scenario: Monitor cookies**
 
+##### For BFCache
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
 2. The user goes to a.com/foo.
 3. This runs the following JS.
@@ -339,6 +340,22 @@ inactiveDocumentController.invalidationSignals.cookies = ['SID'];
 This results in a.com/foo being evicted at step 5,
 so step 6 is a fresh load of a.com/foo
 instead of restoring a.com/foo as it was while logged in.
+
+##### For Prerendering
+
+1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
+1. The user goes to a.com/foo while logged in
+1. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
+   ```js
+inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   ```
+1. The user opens a new tab to a.com/bar
+1. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
+1. The user switches back to their first tab, which is displaying a.com/foo
+1. The user clicks a link to a.com/foo-page-2.
+
+Because the prerender was discarded,
+they correctly see a logged-out view of a.com/foo-page-2.
 
 #### **Scenario: Behave as before with regard to BFCache**
 

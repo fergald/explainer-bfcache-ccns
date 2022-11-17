@@ -265,9 +265,9 @@ as this is too easy to overuse/use incorrectly.
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
 2. The user goes to a.com/foo.
 3. This runs the following JS.
-```js
+   ```js
 backForwardCacheController.evictionSignals.cookies = ['SID'];
-```
+   ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
 6. The user traverses back to a.com/foo.

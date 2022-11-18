@@ -165,10 +165,10 @@ e.g. if a logout occurred while the document was in BFCache.
 Our goal is to make it easy for sites to avoid these problems
 while still allowing and maximising usage of BFCache and prerendering.
 
-While this API could be useful on its own,
-the main motivation for it is as a prerequisite
-for safely enabling BFCaching of pages
-with the `Cache-Control: no-store` (_CCNS_) header.
+While this API is useful on its own,
+it is also a key part of
+[safely enabling BFCaching of pages
+with the `Cache-Control: no-store` (_CCNS_) header][ccns-explainer].
 CCNS is one of the largest blockers of BFCache usage
 and unblocking it would provide a large performance benefit to users.
 
@@ -189,8 +189,10 @@ is an overly broad solution and hurts users.
 A more complicated solution
 is to implement `pageshow` event handlers
 that ensure that the document's contents are updated
-when the document is restored from BFCache.
+when the document is restored from BFCache
+or presented after prerendering.
 This provides the best user experience
+when the content is not privacy sensitive
 but updating a site to do this is non-trivial.
 
 ## Proposed solution

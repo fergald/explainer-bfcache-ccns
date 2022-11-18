@@ -37,7 +37,8 @@ and cancellation of prerendering.
 ## Overview
 
 We propose to add an API that allows a document to declare
-that it must not be invalidated
+that it must be invalidated
+(evicted from BFCache or prerendering cancelled)
 if certain cookies or storage keys change while it is in inactive.
 
 For example, the following JS snippet

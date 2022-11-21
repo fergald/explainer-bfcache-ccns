@@ -53,7 +53,7 @@ the other a simple, explicit eviction API.
 With either of these available
 we believe browsers can safely make a [follow-on change][follow-on-proposal]
 to allow most CCNS documents into BFCache by monitoring cookies
-and usage of the `Authentication` header
+and usage of the `Authorization` header
 and then evicting documents when secure cookies change.
 
 There remain some situations
@@ -89,11 +89,11 @@ Google internal measurements)
 
 ## Background
 
-### Authentication
+### Authorization
 
-See the [Authentication section in the API proposal][authentication]
+See the [Authorization section in the API proposal][authorization]
 for an explanation of the use of cookies, tokens
-and the `Authentication` header.
+and the `Authorization` header.
 
 ### BFCache
 
@@ -162,7 +162,7 @@ Getting to the point where we can BFCache
 all documents with CCNS
 takes several steps.
 
-### New API to monitor authentication impacting events
+### New API to monitor authorization impacting events
 
 We propose an [API][api] that would give documents more control over when they are evicted from BFCache
 by allowing them to declare
@@ -188,8 +188,8 @@ The page can be cached with CCNS if both of the following are true
 
 - the API has been used to declare relevant cookies.
 - either of
-   - the `Authentication` header has not been used.
-   - the `Authentication` header has been used
+   - the `Authorization` header has not been used.
+   - the `Authorization` header has been used
      and the API has been used to declare where tokens are stored.
 
 This allows sites to
@@ -210,7 +210,7 @@ This is the final step.
 
 With the [API][api] in place and in use for some time,
 we would switch to a state where
-documents with CCNS that do not use the `Authentication` header
+documents with CCNS that do not use the `Authorization` header
 and do not use the [API][api]
 would be allowed into BFCache
 and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie).
@@ -412,4 +412,4 @@ will not be impacted by this change.
 [follow-on-proposal]: #follow-on-caching-ccns-documents-by-default
 
 [api]: api.md
-[authentication]: api.md#authentication
+[authorization]: api.md#authorization

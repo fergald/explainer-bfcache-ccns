@@ -100,11 +100,11 @@ or it may be a serious problem.
 
 [This web.dev article](https://web.dev/speculative-prerendering/) has more information on prerendering.
 
-### Authentication
+### Authorization
 
 #### Secure cookies
 
-Best practice for authentication has been,
+Best practice for authorization has been,
 for a long time,
 to hold a token in an HTTPS-only cookie
 so that all requests present this token.
@@ -112,12 +112,12 @@ Deleting this cookie deauthenticates the browser
 and usually corresponds to a logout.
 The same outcome applies when the cookie expires.
 Replacing the cookie with a new value
-might also correspond to a change in authentication state
+might also correspond to a change in authorization state
 or it may just be a refresh of the token
 or other neutral change.
 
 Conservatively, we can consider any change
-to be a significant authentication change
+to be a significant authorization change
 even if it does not correspond to a logout.
 
 #### Other cookies
@@ -127,15 +127,15 @@ e.g. representing contents of shopping carts.
 Changes to these may also imply that inactive pages in BFCache or prerendering
 have outdated/incorrect contents.
 
-#### `Authentication` header and tokens
+#### `Authorization` header and tokens
 
-Authentication may also happen via 3rd parties,
+Authorization may also happen via 3rd parties,
 resulting in tokens that are presented
-via the `Authentication` header.
+via the `Authorization` header.
 For example, federated sign-in
 (sign-in with Google/Twitter/Facebook/etc)
 provides a token that can then be presented on later RPCs.
-There are sites that use this as their only form of authentication
+There are sites that use this as their only form of authorization
 (with no use of cookies).
 Typically they are single-page apps since,
 without cookies,
@@ -150,9 +150,9 @@ This ensures that a logout occurring in another tab
 or in the same tab but in unrelated code
 will result in fully deauthenticating the user.
 
-Any use of the `Authentication` header
+Any use of the `Authorization` header
 indicates that the page is now probably displaying information
-that could only be acquired with authentication.
+that could only be acquired with authorization.
 
 ## Problem we are solving
 
@@ -202,17 +202,17 @@ Allow sites to declare that certain state changes
 in cookies or storage
 should cause the site's inactive documents to be invalidated.
 
-When authentication state changes,
-a site using cookies for authentication
+When authorization state changes,
+a site using cookies for authorization
 will see a change in cookies.
-A site using the `Authentication` header
+A site using the `Authorization` header
 should see a change in stored token(s).
 
 Invalidating when cookies or storage changes strikes a balance
 between impact and ergonomics for site developers.
 Declaring a set of relevant cookies or storage keys is low overhead.
 It ensures that stale documents are not presented to the user
-after authentication state changes.
+after authorization state changes.
 
 Invalidating when cookies change
 causes a relatively low rate of invalidation.
@@ -226,10 +226,10 @@ We do not have any statistics
 on how often prerendering would be cancelled.
 
 We do not have any statistics
-on the frequency of changes to stored authentication tokens
+on the frequency of changes to stored authorization tokens
 since we cannot know which stored items
-are authentication tokens.
-We will measure how often the `Authentication` header
+are authorization tokens.
+We will measure how often the `Authorization` header
 is seen on pages with CCNS
 and what impact it would have
 if we were to continue to block cacheing
@@ -247,7 +247,7 @@ use of this API would be taken as a signal
 that a document with CCNS may enter BFCache.
 This would allow sites to almost entirely eliminate CCNS blocking
 while still ensuring that
-documents are not restored after authentication state has changed.
+documents are not restored after authorization state has changed.
 
 ## **API**
 

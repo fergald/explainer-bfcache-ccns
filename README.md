@@ -184,6 +184,17 @@ even with the CCNS header
 because it will be evicted
 when relevant state changes.
 
+In the following,
+whether the `Authorization` header has been used
+is based on observing network requests
+made by the top-level frame
+and all same-origin subframes.
+We consider all same-origin frames
+because they have access to the same stored tokens
+(this will change with [storage partitioning][storage-partitioning]).
+We do not consider cross-origin subframes
+because CCNS on subframes does not currently prevent BFCaching.
+
 The page can be cached with CCNS if both of the following are true
 
 - the API has been used to declare relevant cookies.
@@ -413,3 +424,4 @@ will not be impacted by this change.
 
 [api]: api.md
 [authorization]: api.md#authorization
+[storage-partitioning]: https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html

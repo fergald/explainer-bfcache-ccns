@@ -333,8 +333,9 @@ as this is too easy to overuse/use incorrectly.
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
 2. The user goes to a.com/foo.
 3. This runs the following JS.
+
    ```js
-inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   inactiveDocumentController.invalidationSignals.cookies = ['SID'];
    ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
@@ -347,15 +348,16 @@ instead of restoring a.com/foo as it was while logged in.
 ##### For Prerendering
 
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
-1. The user goes to a.com/foo while logged in
-1. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
+2. The user goes to a.com/foo while logged in
+3. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
+
    ```js
-inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   inactiveDocumentController.invalidationSignals.cookies = ['SID'];
    ```
-1. The user opens a new tab to a.com/bar
-1. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
-1. The user switches back to their first tab, which is displaying a.com/foo
-1. The user clicks a link to a.com/foo-page-2.
+4. The user opens a new tab to a.com/bar
+5. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
+6. The user switches back to their first tab, which is displaying a.com/foo
+7. The user clicks a link to a.com/foo-page-2.
 
 Because the prerender was discarded,
 they correctly see a logged-out view of a.com/foo-page-2.

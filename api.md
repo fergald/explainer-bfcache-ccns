@@ -51,8 +51,7 @@ inactiveDocumentController.invalidationSignals.cookies = ['SID'];
 ```
 
 Similarly, the following JS snippet
-will cause any documents from this document's origin
-which are currently inactive
+will cause the document, if inactive,
 to be invalidated
 if the value of the key 'authToken' in session storage changes,
 

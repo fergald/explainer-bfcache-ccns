@@ -42,8 +42,7 @@ that it must be invalidated
 if certain cookies or storage keys change while it is in inactive.
 
 For example, the following JS snippet
-will cause any documents from this document's origin
-which are currently inactive
+will cause the document, if inactive,
 to be invalidated
 if the 'SID' cookie changes,
 
@@ -275,7 +274,7 @@ If the store is also used for other data
 then we will over-invalidate.
 
 For example, the following JS snippet
-will cause any inactive documents from this document's origin
+will cause the document, if inactive,
 to be invalidated if the SID cookie changes
 or if there is a change to the 'tokens' store
 in the 'auth' database of IndexedDB.

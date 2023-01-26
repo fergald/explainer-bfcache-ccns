@@ -36,7 +36,8 @@ and cancellation of prerendering.
 
 ## Overview
 
-We propose to add an API that allows a document to declare
+We propose to add an API that allows
+the top-level document in a page to declare
 that it must be invalidated
 (evicted from BFCache or prerendering cancelled)
 if certain cookies or storage keys change while it is in inactive.
@@ -307,6 +308,19 @@ have all been left unset or set to `null` or `undefined`.
 * no storage-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for tokens.
 
+#### Top-level documents vs subframes
+
+The API is only availble to top-level documents.
+This is consistent with ignoring
+CCNS headers of subframes with regard to BFCache.
+
+We do not want to give cross-origin subframes
+the power to cause invalidation.
+
+If there is a demand and clear use-case
+for making it available in same-origin subframes
+then we should consider this.
+
 ### API Goals
 
 While the API is a straw person, there are some specific goals:
@@ -315,6 +329,7 @@ While the API is a straw person, there are some specific goals:
 * distinguish between the API having been used or not
 * allow for an explicit signal that invalidation should not be triggered
   just because cookies/keys change
+* avoid over-eviction
 
 ### API Non-goals
 

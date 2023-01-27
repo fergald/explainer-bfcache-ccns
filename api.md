@@ -296,14 +296,14 @@ When `inactiveDocumentController.invalidationSignals.[some setter]` is called se
   or storage keys (delete/set),
   the document should be invalidated.
 
-When `inactiveDocumentController.invalidationSignals.SetCookies` is not called
-or the parameter is `null` or `undefined`.
+When `setCookies` is not called
+or called with `null` or `undefined` parameter.
 
 * no cookie-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for cookies.
 
-When all of the `setLocalStorage`, `setSessionStorage` and `setIndexedDB` are not called
-or the parameter to `null` or `undefined`.
+When none of the functions `setLocalStorage`, `setSessionStorage`, and `setIndexedDB` are called,
+or are called with `null` or `undefined` parameter.
 
 * no storage-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for tokens.

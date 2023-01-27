@@ -48,7 +48,7 @@ to be invalidated
 if the 'SID' cookie changes,
 
 ```js
-inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+inactiveDocumentController.invalidationSignals.setCookie(['SID']);
 ```
 
 Similarly, the following JS snippet
@@ -57,7 +57,7 @@ to be invalidated
 if the value of the key 'authToken' in session storage changes,
 
 ```js
-inactiveDocumentController.invalidationSignals.sessionStorage = ['authToken'];
+inactiveDocumentController.invalidationSignals.setSessionStorage(['authToken']);
 ```
 
 ## Background
@@ -256,17 +256,17 @@ we are more interested in feedback about the fundamental idea
 than about the specifics of the API (naming, shape etc).
 
 The API presents a `inactiveDocumentController.invalidationSignals` object
-which has fields for registering cookies and other storage mechanisms:
+which has methods for registering cookies and other storage mechanisms:
 
-- cookies
-- SessionStorage
-- LocalStorage
-- IndexedDB
+- setCookie
+- setSessionStorage
+- setLocalStorage
+- setIndexedDB
 
-For cookies, SessionStorage and LocalStorage,
+For setCookie, setSessionStorage and setLocalStorage,
 items to monitor for changes
 are identified by a single key.
-For IndexedDB, a pair of database name and store name
+For setIndexedDB, a combination of database name and object store name
 identify the item to be monitored.
 It is unclear if this is sufficient for all uses of IndexedDB for token storage.
 It assumes that tokens will be stored in a store dedicated to token storage.
@@ -280,13 +280,13 @@ or if there is a change to the 'tokens' store
 in the 'auth' database of IndexedDB.
 
 ```js
-inactiveDocumentController.invalidationSignals.cookies = ['SID'];
-inactiveDocumentController.invalidationSignals.indexedDB = [['auth', 'tokens']];
+inactiveDocumentController.invalidationSignals.setCookie(['SID']);
+inactiveDocumentController.invalidationSignals.setIndexedDB([{'database': 'auth', 'object_store': 'tokens'}]);
 ```
 
 ### Details
 
-When `inactiveDocumentController.invalidationSignals.[some field]` is set to a list
+When `inactiveDocumentController.invalidationSignals.[some setter]` is called set to a list
 
 * if a document is in BFCache or prerendering,
   the browser must monitor the listed cookies or keys
@@ -296,14 +296,14 @@ When `inactiveDocumentController.invalidationSignals.[some field]` is set to a l
   or storage keys (delete/set),
   the document should be invalidated.
 
-When `inactiveDocumentController.invalidationSignals.cookies` is left unset
-or set to `null` or `undefined`.
+When `inactiveDocumentController.invalidationSignals.SetCookies` is not called
+or the parameter is `null` or `undefined`.
 
 * no cookie-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for cookies.
 
-When the `localStorage`, `sessionStorage` and `indexedDB` fields
-have all been left unset or set to `null` or `undefined`.
+When all of the `setLocalStorage`, `setSessionStorage` and `setIndexedDB` are not called
+or the parameter to `null` or `undefined`.
 
 * no storage-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for tokens.
@@ -348,7 +348,7 @@ as this is too easy to overuse/use incorrectly.
 3. This runs the following JS.
 
    ```js
-   inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   inactiveDocumentController.invalidationSignals.setCookie(['SID']);
    ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
@@ -361,15 +361,15 @@ instead of restoring a.com/foo as it was while logged in.
 ##### For Prerendering
 
 1. Site a.com uses a cookie named "SID" to store an auth token for logged-in users.
-2. The user goes to a.com/foo while logged in
+2. The user goes to a.com/foo while logged in.
 3. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
 
    ```js
-   inactiveDocumentController.invalidationSignals.cookies = ['SID'];
+   inactiveDocumentController.invalidationSignals.setCookie(['SID']);
    ```
-4. The user opens a new tab to a.com/bar
+4. The user opens a new tab to a.com/bar.
 5. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
-6. The user switches back to their first tab, which is displaying a.com/foo
+6. The user switches back to their first tab, which is displaying a.com/foo.
 7. The user clicks a link to a.com/foo-page-2.
 
 Because the prerender was discarded,
@@ -389,7 +389,7 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-inactiveDocumentController.invalidationSignals.cookies = null;
+inactiveDocumentController.invalidationSignals.setCookie(null);
 ```
 
 #### **Scenario: Explicitly monitor no cookies**
@@ -402,7 +402,7 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-inactiveDocumentController.invalidationSignals.cookies = [];
+inactiveDocumentController.invalidationSignals.setCookie([]);
 ```
 
 #### **Scenario: Programmatic flushing of BFCache**
@@ -437,7 +437,7 @@ The choice to use a JS API rather than a header is currently somewhat arbitrary.
 * JS seems more flexible
   and avoids parsing and serialisation concerns if we make changes in the future.
 * A header centralises control
-  and prevents random JS libraries from altering BFCache+CCNS behaviour
+  and prevents random JS libraries from altering BFCache+CCNS behaviour.
 
 It may be that we would want both.
 We will spend more time on this after validating the basic idea.

@@ -244,6 +244,9 @@ currently blocked from BFCache by the CCNS header
 have any cookie change within 3.5 minutes of entering BFCache.
 Fewer than 5% have any [secure cookie][secure-cookie] change
 in that time.
+Note these stats no longer reflect the planned semantics of the API.
+We expect that the rate of changes will be higher
+if we monitor cookie changes occuring since the page was requested.
 
 We do not have any statistics
 on how often prerendering would be cancelled.
@@ -330,6 +333,31 @@ or are called with `null` or `undefined` parameter.
 
 * no storage-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for tokens.
+
+#### Timing
+
+##### Cookies
+
+Any cookie which has changed since the initial HTTP request was issued
+will count as changed for invalidation purposes.
+This includes changes that occur before the cookie name is added
+via the API.
+
+This is because these cookies determined the content of the HTTP response
+and a logout could occur after the request was sent
+but before before the API was called.
+Such a page should not be restored (or even stored) in BFCache
+or presented from prerendering.
+
+##### Storage
+
+Any change to storage that occurs
+after the relevant key or selector is added via the API
+will count as changed for invalidation purposes.
+
+This is because stored values do not impact the content of the HTTP response (for the page)
+they only have impact after they have been read.
+Pages should add them via the API before reading them.
 
 #### Top-level documents vs subframes
 

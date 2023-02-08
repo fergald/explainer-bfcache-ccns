@@ -48,16 +48,16 @@ to be invalidated
 if the 'SID' cookie changes,
 
 ```js
-inactiveDocumentController.invalidationSignals.setCookie(['SID']);
+inactiveDocumentController.invalidationSignals.addCookieNames(['SID']);
 ```
 
 Similarly, the following JS snippet
 will cause the document, if inactive,
 to be invalidated
-if the value of the key 'authToken' in session storage changes,
+if the value of the key 'authToken' in LocalStorage changes,
 
 ```js
-inactiveDocumentController.invalidationSignals.setSessionStorage(['authToken']);
+inactiveDocumentController.invalidationSignals.addLocalStorageKeys(['authToken']);
 ```
 
 ## Background
@@ -258,15 +258,14 @@ than about the specifics of the API (naming, shape etc).
 The API presents a `inactiveDocumentController.invalidationSignals` object
 which has methods for registering cookies and other storage mechanisms:
 
-- setCookie
-- setSessionStorage
-- setLocalStorage
-- setIndexedDB
+- addCookieNames
+- addLocalStorageKeys
+- addIndexedDBSelectors
 
-For setCookie, setSessionStorage and setLocalStorage,
+For addCookieNames, setSessionStorage and addLocalStorageKeys,
 items to monitor for changes
 are identified by a single key.
-For setIndexedDB, a combination of database name and object store name
+For addIndexedDBSelectors, a combination of database name and object store name
 identify the item to be monitored.
 It is unclear if this is sufficient for all uses of IndexedDB for token storage.
 It assumes that tokens will be stored in a store dedicated to token storage.
@@ -280,13 +279,13 @@ or if there is a change to the 'tokens' store
 in the 'auth' database of IndexedDB.
 
 ```js
-inactiveDocumentController.invalidationSignals.setCookie(['SID']);
-inactiveDocumentController.invalidationSignals.setIndexedDB([{'database': 'auth', 'object_store': 'tokens'}]);
+inactiveDocumentController.invalidationSignals.addCookieNames(['SID']);
+inactiveDocumentController.invalidationSignals.addIndexedDBSelectors([{'database': 'auth', 'object_store': ['tokens']}]);
 ```
 
 ### Details
 
-When `inactiveDocumentController.invalidationSignals.[some setter]` is called set to a list
+When `inactiveDocumentController.invalidationSignals.<some mutator>` is called set to a list
 
 * if a document is in BFCache or prerendering,
   the browser must monitor the listed cookies or keys
@@ -296,13 +295,13 @@ When `inactiveDocumentController.invalidationSignals.[some setter]` is called se
   or storage keys (delete/set),
   the document should be invalidated.
 
-When `setCookies` is not called
+When `addCookieNamess` is not called
 or called with `null` or `undefined` parameter.
 
 * no cookie-based invalidation should occur.
 * the browser can consider the API to _have not_ been used for cookies.
 
-When none of the functions `setLocalStorage`, `setSessionStorage`, and `setIndexedDB` are called,
+When none of the functions `addLocalStorageKeys, and `addIndexedDBSelectors` are called,
 or are called with `null` or `undefined` parameter.
 
 * no storage-based invalidation should occur.
@@ -348,7 +347,7 @@ as this is too easy to overuse/use incorrectly.
 3. This runs the following JS.
 
    ```js
-   inactiveDocumentController.invalidationSignals.setCookie(['SID']);
+   inactiveDocumentController.invalidationSignals.addCookieNames(['SID']);
    ```
 4. The user navigates to a.com/bar.
 5. The user logs out from a.com (no navigation occurs).
@@ -365,7 +364,7 @@ instead of restoring a.com/foo as it was while logged in.
 3. This prerenders a logged-in view of a.com/foo-page-2, which runs the following JS:
 
    ```js
-   inactiveDocumentController.invalidationSignals.setCookie(['SID']);
+   inactiveDocumentController.invalidationSignals.addCookieNames(['SID']);
    ```
 4. The user opens a new tab to a.com/bar.
 5. The user logs out of a.com in that new tab. This causes the prerendered copy of a.com/foo-page-2 held by the first tab to get discarded.
@@ -389,7 +388,7 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-inactiveDocumentController.invalidationSignals.setCookie(null);
+inactiveDocumentController.invalidationSignals.addCookieNames(null);
 ```
 
 #### **Scenario: Explicitly monitor no cookies**
@@ -402,7 +401,7 @@ in the context of the [broader proposal][ccns-explainer]
 to allow BFCaching of documents with the CCNS header.
 
 ```js
-inactiveDocumentController.invalidationSignals.setCookie([]);
+inactiveDocumentController.invalidationSignals.addCookieNames([]);
 ```
 
 #### **Scenario: Programmatic flushing of BFCache**

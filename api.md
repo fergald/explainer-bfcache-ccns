@@ -155,12 +155,14 @@ that could only be acquired with authorization.
 
 ## Problem we are solving
 
-When a document is in BFCache or prerendering for some time
-and is then made visible,
+When a document has been loaded or prerendered for some time
 the contents of the document may be out of date
 or worse, the document may contain sensitive information
 that the current user should not have access to,
-e.g. if a logout occurred while the document was in BFCache.
+e.g. if a logout occurred since the document was loaded.
+
+Such a document should not be presented to the user
+from BFCache or prerendering.
 
 Our goal is to make it easy for sites to avoid these problems
 while still allowing and maximising usage of BFCache and prerendering.
@@ -183,6 +185,28 @@ BFCache is a significant performance win for users,
 so completely preventing its use,
 just in case
 is an overly broad solution and hurts users.
+
+### Monitor for changes
+
+A page that cares about tracking changes to logged-in state
+can monitor to authorization tokens
+and remove sensitive information.
+
+#### Cookies
+Changes to non-HTTP-only cookies can be observed.
+This is not ideal,
+since authorization information is usually stored in HTTP-only cookies.
+
+#### LocalStorage
+
+Values in LocalStorage can be monitored,
+allowing pages to react to changes to Authorization tokens
+stored in LocalStorage.
+
+#### IndexedDB
+
+There is ((currently)[https://github.com/w3c/IndexedDB/issues/51]) no way to monitor
+changes to IndexedDB.
 
 ### Respond to `pageshow` events
 

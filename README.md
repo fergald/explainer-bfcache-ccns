@@ -160,7 +160,23 @@ was still in BFCache.
 
 Getting to the point where we can BFCache
 all documents with CCNS
-takes several steps.
+takes multiple steps
+*and* there are multiple paths we can take.
+Those paths are essentially
+
+- API-first
+  - introduce the API
+  - move to caching some CCNS pages
+- caching-frist
+  - start caching some CCNS pages by default
+    using the most conservative criteria
+  - introduce the API
+  - cache more CCNS pagesby default
+    by adding the API to the criteria
+
+An earlier version of this explainer
+described the API-first path
+but we are now proposing the caching-first path.
 
 ### New API to monitor authorization impacting events
 
@@ -176,32 +192,75 @@ However there has been no demand for it from developers
 and on its own
 it would cause more BFCache evictions.
 
-### Allow CCNS documents to be BFCached when the API is used
+### Signals used to determine if BFCaching is allowed
+
+- API is available - this requires that both
+  - the API is exposed to JS
+  - JS is not disabled by the user
+- HTTP-authentication state
+- enterprise policy switch
+- what cookies have changed.
+  This signal is only valid if cookies are not disabled
+  by the user/agent for this page.
+  If cookies are disabled then we consider them to always have changed.
+- have RPCs occurred that use the `Authorization` header.
+  This is based on observing network requests
+  made by the top-level frame
+  and all same-origin subframes.
+  We consider all same-origin frames
+  because they have access to the same stored tokens
+  (this will change with [storage partitioning][storage-partitioning]).
+  We do not consider cross-origin subframes
+  because CCNS on subframes does not currently prevent BFCaching.
+
+### Signals that are always used
+
+In the below,
+the following signals are always used
+and can cause a CCNS page not to be restored from BFCache
+regardless of any other conditions.
+
+#### HTTP-authentication state
+
+If HTTP-authentication state changes then
+a CCNS page will not be restored from BFCache.
+
+#### Enterprise policy switch
+
+If enterprise policy disabled BFCaching of CCNS pages
+then a CCNS page will not be restored from BFCache.
+Enterprises often have difficult-to-update software
+and/or shared devices.
+
+### Allow CCNS documents to be BFCached without the API.
+
+If the API is not available,
+either because it is not launched
+or because the user has disabled JS for this page
+then we take the most conservative approach
+and only allow pages to be restored if
+
+- cookies are enabled and no cookies (of any kind)
+  have changed since the document was fetched
+- no RPCs have occurred that use the `Authorization` header
+
+### Allow more CCNS documents to be BFCached with the API
 
 We take usage of the [API][api]
 as a signal that the document can be BFCached
 even with the CCNS header
-because it will be evicted
-when relevant state changes.
-
-In the following,
-whether the `Authorization` header has been used
-is based on observing network requests
-made by the top-level frame
-and all same-origin subframes.
-We consider all same-origin frames
-because they have access to the same stored tokens
-(this will change with [storage partitioning][storage-partitioning]).
-We do not consider cross-origin subframes
-because CCNS on subframes does not currently prevent BFCaching.
+because it has specified the conditions
+under which it should not be restored.
 
 The page can be cached with CCNS if both of the following are true
 
-- the API has been used to declare relevant cookies.
+- the API has been used to declare relevant cookies
+  and those cookies have not changed since the page was fetched.
 - either of
    - the `Authorization` header has not been used.
    - the `Authorization` header has been used
-     and the API has been used to declare where tokens are stored.
+     and the API has been used to declare where tokens are stored
+     and those tokens have not changed.
 
 This allows sites to
 
@@ -210,21 +269,17 @@ This allows sites to
 - with the very small engineering overhead
   of declaring a list of cookies to monitor
 
-While this API could increase evictions
-(since all it does is add a new way to cause evictions),
-if it allows caching of documents with CCNS,
-it could greatly increase the number of documents that get into BFCache in the first place.
+### BFCache CCNS pages if HTTPS-only cookies don't change
 
-### BFCache CCNS pages by default
-
-This is the final step.
+This is the ultimate combination.
 
 With the [API][api] in place and in use for some time,
 we would switch to a state where
 documents with CCNS that do not use the `Authorization` header
 and do not use the [API][api]
 would be allowed into BFCache
-and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie).
+and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie)
+(only if cookies are enabled).
 
 This would happen some time after the [API][api] is stable.
 It would need to be announced ahead of time
@@ -239,20 +294,11 @@ between making the [API][api] available and default BFCacheing of CCNS documents
 This will allow for more awareness
 and early opt-in by use of the cookie-monitoring [API][api].
 
-### Carve-outs
-
-We also add several other conditions that cause the BFCache to not be used
-
-* no BFCaching of CCNS documents
-  if cookies for that origin have been disabled in the browser
-  as this would lead to unconditional caching
-* (possible) no BFCaching if a document has no HTTPS-only cookies
-  as this would lead to unconditional caching
-* no BFCaching if JS is disabled in the browser
-  as the document has not had a chance to use the [API][api]
-* provide a disable switch to enterprises with managed browsers
-  as they often have difficult-to-update software and/or shared devices
-* evict documents if the HTTP-Authentication state changes
+We may also consider not BFCaching
+if a document has no HTTPS-only cookies
+as this would lead to unconditional caching.
+In that case we would fall back to the more conservative approach
+of monitoring all cookies.
 
 ## Spec changes
 

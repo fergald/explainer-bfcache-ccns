@@ -165,11 +165,11 @@ takes multiple steps
 Those paths are essentially
 
 - caching-first (proposed)
-  - start caching some CCNS pages by default
-    using the most conservative criteria
-  - introduce the API
-  - cache more CCNS pagesby default
-    by adding the API to the criteria
+  - [start caching some CCNS pages by default
+    using the most conservative criteria](#allow-ccns-documents-to-be-bfcached-without-the-api)
+  - [introduce the API](#allow-more-ccns-documents-to-be-bfcached-with-the-api)
+  - [cache more CCNS pagesby default
+    by adding the API to the criteria](#bfcache-ccns-pages-if-https-only-cookies-dont-change)
 - API-first (dropped in favour of caching-first)
   - introduce the API
   - move to caching some CCNS pages
@@ -228,7 +228,7 @@ then a CCNS page will not be restored from BFCache.
 Enterprises often have difficult-to-update software
 and/or shared devices.
 
-### Allow CCNS documents to be BFCached without the API.
+### Allow CCNS documents to be BFCached without the API
 
 If the API is not available,
 either because it is not launched

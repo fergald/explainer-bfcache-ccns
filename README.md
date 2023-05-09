@@ -168,7 +168,7 @@ Those paths are essentially
   - [start caching some CCNS pages by default
     using the most conservative criteria](#allow-ccns-documents-to-be-bfcached-without-the-api)
   - [introduce the API](#allow-more-ccns-documents-to-be-bfcached-with-the-api)
-  - [cache more CCNS pagesby default
+  - [cache more CCNS pages by default
     by adding the API to the criteria](#bfcache-ccns-pages-if-https-only-cookies-dont-change)
 - API-first (dropped in favour of caching-first)
   - introduce the API

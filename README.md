@@ -164,19 +164,15 @@ takes multiple steps
 *and* there are multiple paths we can take.
 Those paths are essentially
 
-- API-first
-  - introduce the API
-  - move to caching some CCNS pages
-- caching-frist
+- caching-first (proposed)
   - start caching some CCNS pages by default
     using the most conservative criteria
   - introduce the API
   - cache more CCNS pagesby default
     by adding the API to the criteria
-
-An earlier version of this explainer
-described the API-first path
-but we are now proposing the caching-first path.
+- API-first (dropped in favour of caching-first)
+  - introduce the API
+  - move to caching some CCNS pages
 
 ### New API to monitor authorization impacting events
 

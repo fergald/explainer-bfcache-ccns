@@ -150,7 +150,8 @@ or in the same tab but in unrelated code
 will result in fully deauthenticating the user.
 
 Any use of the `Authorization` header
-indicates that the page is now probably displaying information
+in RPCs made by the page's JS execution context
+indicates that the page is now potentially displaying information
 that could only be acquired with authorization.
 
 ## Problem we are solving

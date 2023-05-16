@@ -46,7 +46,15 @@ caching most CCNS (but evicting some).
 In this state, we estimate that
 CCNS will cause BFCache misses for only about 1% of history navigations.
 
-We propose [APIs][api]
+We propose to start BFCaching pages
+where we believe we can avoid
+exposing sensitive information
+that would otherwise have been inaccessible to the user.
+This policy is conservative
+and will deny BFCache to many pages
+that could safely be cached.
+
+We also propose [APIs][api]
 that give page authors the ability to evict pages from BFCache,
 one based on monitoring cookies and storage (preferred),
 the other a simple, explicit eviction API.
@@ -55,9 +63,11 @@ we believe browsers can safely make a [follow-on change][follow-on-proposal]
 to allow most CCNS documents into BFCache by monitoring cookies
 and usage of the `Authorization` header
 and then evicting documents when secure cookies change.
+This gives page authors finer-grained control
+allowing them to avoid over-eviction.
 
-There remain some situations
-where caching a CCNS page could be a problem.
+There are some other circumastances
+where we should not cach.
 These are detailed below.
 
 ### Impact

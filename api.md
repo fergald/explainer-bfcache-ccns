@@ -62,24 +62,9 @@ inactiveDocumentController.invalidationSignals.addLocalStorageKeys(['authToken']
 
 ## Background
 
-### BFCache
-
-BFCache is a "cache" in browsers
-such that when the user navigates away from a top-level document,
-the browser may preserve that document in a frozen state
-and if the user traverses history back to that document's history entry,
-the browser may just unfreeze the preserved document.
-
-This provides a significant performance boost
-on these navigations
-at the cost of not refreshing the content.
-Depending on the nature of the content,
-not refreshing the content may be harmless,
-inconvenient or a serious problem
-(e.g. the user has logged out
-but the page still contains logged-in content).
-
-[This web.dev article](https://web.dev/bfcache) has more information on BFCache.
+The [Background section](README.md#Bakground] of the main README
+covers many essential items
+and should be read first.
 
 ### Prerendering
 
@@ -98,61 +83,6 @@ this may be harmless
 or it may be a serious problem.
 
 [This web.dev article](https://web.dev/speculative-prerendering/) has more information on prerendering.
-
-### Authorization
-
-#### Secure cookies
-
-Best practice for authorization has been,
-for a long time,
-to hold a token in an HTTPS-only cookie
-so that all requests present this token.
-Deleting this cookie deauthenticates the browser
-and usually corresponds to a logout.
-The same outcome applies when the cookie expires.
-Replacing the cookie with a new value
-might also correspond to a change in authorization state
-or it may just be a refresh of the token
-or other neutral change.
-
-Conservatively, we can consider any change
-to be a significant authorization change
-even if it does not correspond to a logout.
-
-#### Other cookies
-
-Other non-auth or non-HTTPS-only cookies may also be significant to a page
-e.g. representing contents of shopping carts.
-Changes to these may also imply that inactive pages in BFCache or prerendering
-have outdated/incorrect contents.
-
-#### `Authorization` header and tokens
-
-Authorization may also happen via 3rd parties,
-resulting in tokens that are presented
-via the `Authorization` header.
-For example, federated sign-in
-(sign-in with Google/Twitter/Facebook/etc)
-provides a token that can then be presented on later RPCs.
-There are sites that use this as their only form of authorization
-(with no use of cookies).
-Typically they are single-page apps since,
-without cookies,
-HTTP requests resulting from navigation
-would be unauthenticated.
-
-Best practice for tokens like this
-is to write them to site-private storage,
-e.g. LocalStorage, SessionStorage, IndexedDB.
-The token is read from storage when attaching to each RPC.
-This ensures that a logout occurring in another tab
-or in the same tab but in unrelated code
-will result in fully deauthenticating the user.
-
-Any use of the `Authorization` header
-in RPCs made by the page's JS execution context
-indicates that the page is now potentially displaying information
-that could only be acquired with authorization.
 
 ## Problem we are solving
 

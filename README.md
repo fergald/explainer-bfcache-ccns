@@ -388,13 +388,15 @@ If the API is not available,
 either because it is not launched
 or because the user has disabled JS for this page
 then we take the most conservative approach
-and only allow pages to be restored if
+and only allow pages to be restored if:
+
+For every CCNS frame (main and sub)
+in a CCNS main document.
 
 - cookies are enabled and no cookies (of any kind)
   have changed since the document was fetched.
-  We consider all CCNS documents for this,
-  including cross-origin subframes.
 - no RPCs with potentially sensitive information have occurred
+  (CCNS on response)
 - none of the "always used" signals are present
 
 ### Allow more CCNS documents to be BFCached with the API

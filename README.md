@@ -30,6 +30,7 @@ We are particularly interested in feedback on
 ## Overview
 
 ### Problem
+
 Documents with a [`Cache-Control: no-store`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) header (_CCNS_)
 are blocked from entering BFCache in practice on all browsers.
 Chrome measurements indicate
@@ -67,7 +68,7 @@ This gives page authors finer-grained control
 allowing them to avoid over-eviction.
 
 There are some other circumastances
-where we should not cach.
+where we should not cache.
 These are detailed below.
 
 ### Impact

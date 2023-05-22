@@ -39,6 +39,16 @@ and 7% of history navigations on desktop
 from being BFCached.
 This is the largest single blocker of BFCache usage.
 
+CCNS documents are blocked because
+they may contain sensitive content that
+was accessible when the document was first fetched
+but which should now be inaccessible.
+This is especially important on devices that are shared.
+
+The goal is to unblock BFCaching of
+a meaningful fraction of CCNS pages
+without compromising sensitive information.
+
 ### Proposal
 
 These proposals aims to move us from
@@ -123,6 +133,37 @@ too much time having passed since navigating away).
 
 [This web.dev article](https://web.dev/bfcache) has more information on BFCache.
 
+### Sensitive information
+
+In the context of CCNS and BFCache,
+we consider sensitive information
+to be information that should not be available
+after the user has navigated away from the page
+and causes the use of CCNS.
+
+We do not consider data in `localStorage`
+to be sensitive data in this context
+because that data currently remains available
+after the user has navigated away.
+
+Data received over the network
+either in the page
+or in response to authenticated RPCs.
+Furthermore we would expect
+that if the content is senstive
+that is it would be uncacheable
+and include CCNS itself.
+
+The sources of senstive data we consider are
+
+- documents fetched as part of the page (the main frame and iframes)
+  authorized by cookies
+- data received via `fetch` and `XMLHttpRequest`
+- data received from
+  - `WebSocket`
+  - `WebTransport`
+  - `WebRTC`
+
 ### Authorization
 
 #### Secure cookies
@@ -150,11 +191,23 @@ e.g. representing contents of shopping carts.
 Changes to these may also imply that inactive pages in BFCache or prerendering
 have outdated/incorrect contents.
 
-#### `Authorization` header and tokens
+The most conservative stance would be
+to consider all cookies on CCNS documents
+as potentially guarding access
+to sensitive information.
+We are not aware of any reasons why
+sites would use insecure cookies
+for this purpose
+and it is very poor security practice to do so.
+As a result we aim for an end-state
+where only secure cookies are considered.
+
+#### Access tokens
 
 Authorization may also happen via 3rd parties,
-resulting in tokens that are presented
-via the `Authorization` header.
+or custom mechanisms
+resulting in tokens that are presented in RPCs.
+
 For example, federated sign-in
 (sign-in with Google/Twitter/Facebook/etc)
 provides a token that can then be presented on later RPCs.
@@ -163,7 +216,32 @@ There are sites that use this as their only form of authorization
 Typically they are single-page apps since,
 without cookies,
 HTTP requests resulting from navigation
-would be unauthenticated.
+may be unauthenticated
+with all sensitive information
+being provided through RPCs.
+
+##### Presentation
+
+The OAuth [spec](https://datatracker.ietf.org/doc/html/rfc6750#section-5.3) recommends
+not to pass access tokens in the URL,
+to use the `Authorization` header instead.
+Twitter and Facebook accept access tokens in the URL,
+this practice is suggested on Stack Exchange
+and Facebook's JS client library
+put the tokens in the URL.
+We must assume that passing authentication tokens in the URL
+is common practice.
+For OAuth,
+the token in the URL is standardized
+to be passed in the parameter `access_token`
+but we cannot assume that OAuth
+is the only authentication scheme.
+
+This means that in practice,
+we cannot use the absence of the `Authorization` header
+as a signal that an RPC contains no sensitive information.
+
+##### Storage
 
 Best practice for tokens like this
 is to write them to site-private storage,
@@ -172,11 +250,6 @@ The token is read from storage when attaching to each RPC.
 This ensures that a logout occurring in another tab
 or in the same tab but in unrelated code
 will result in fully deauthenticating the user.
-
-Any use of the `Authorization` header
-in RPCs made by the page's JS execution context
-indicates that the page is now potentially displaying information
-that could only be acquired with authorization.
 
 ### Current interactions between BFCache and CCNS
 
@@ -229,7 +302,7 @@ was still in BFCache.
 ## Detailed Proposal
 
 Getting to the point where we can BFCache
-all documents with CCNS
+many documents with CCNS
 takes multiple steps
 *and* there are multiple paths we can take.
 Those paths are essentially
@@ -269,15 +342,15 @@ it would cause more BFCache evictions.
   This signal is only valid if cookies are not disabled
   by the user/agent for this page.
   If cookies are disabled then we consider them to always have changed.
-- have RPCs occurred that use the `Authorization` header.
-  This is based on observing network requests
+- have RPCs occurred with CCNS responses?
+  This is based on observing network responses
   made by the top-level frame
-  and all same-origin subframes.
-  We consider all same-origin frames
-  because they have access to the same stored tokens
-  (this will change with [storage partitioning][storage-partitioning]).
-  We do not consider cross-origin subframes
-  because CCNS on subframes does not currently prevent BFCaching.
+  and all subframes.
+- have network connections been made
+  where we have no signal about cacheability?
+  - `WebSocket`
+  - `WebTransport`
+  - `WebRTC`
 
 ### Signals that are always used
 
@@ -298,6 +371,17 @@ then a CCNS page will not be restored from BFCache.
 Enterprises often have difficult-to-update software
 and/or shared devices.
 
+#### Opaque network APIs
+
+If any of
+
+- `WebSocket`
+- `WebTransport`
+- `WebRTC`
+
+APIs are used by a document with CCNS
+the we are forced to assume it contains sensitive information.
+
 ### Allow CCNS documents to be BFCached without the API
 
 If the API is not available,
@@ -307,8 +391,11 @@ then we take the most conservative approach
 and only allow pages to be restored if
 
 - cookies are enabled and no cookies (of any kind)
-  have changed since the document was fetched
-- no RPCs have occurred that use the `Authorization` header
+  have changed since the document was fetched.
+  We consider all CCNS documents for this,
+  including cross-origin subframes.
+- no RPCs with potentially sensitive information have occurred
+- none of the "always used" signals are present
 
 ### Allow more CCNS documents to be BFCached with the API
 
@@ -318,37 +405,34 @@ even with the CCNS header
 because it has specified the conditions
 under which it should not be restored.
 
-The page can be cached with CCNS if both of the following are true
+A CCNS page can be cached as before but
 
-- the API has been used to declare relevant cookies
-  and those cookies have not changed since the page was fetched.
-- either of
-   - the `Authorization` header has not been used.
-   - the `Authorization` header has been used
-     and the API has been used to declare where tokens are stored
-     and those tokens have not changed.
+- if the API has been used to declare cookies for a document
+  then changes to other cookies are not considered relevant.
+- if the API has been used to declare
+  where access tokens are stored
+  and those tokens have not changed
+  then RPCs are considered relevant.
 
 This allows sites to
 
 - increase their BFCache hit rate
 - avoid restoring documents with information that should not be restored
 - with the very small engineering overhead
-  of declaring a list of cookies to monitor
+  of declaring a list of cookies
+  or storage locations to monitor
 
 ### BFCache CCNS pages if HTTPS-only cookies don't change
 
 This is the ultimate combination.
 
-With the [API][api] in place and in use for some time,
-we would switch to a state where
-documents with CCNS that do not use the `Authorization` header
-and do not use the [API][api]
-would be allowed into BFCache
-and evicted on any change to _any_ HTTPS-only cookie ("secure" cookie)
-(only if cookies are enabled).
+With the [API][api] available,
+when no cookies are declared via the API
+we only consider changes to secure cookies
+as preventing BFCacheing.
 
 This would happen some time after the [API][api] is stable.
-It would need to be announced ahead of time
+It would need to be well announced ahead of time
 and perhaps also use console warnings
 or other prompts to raise awareness.
 
@@ -359,12 +443,6 @@ and some effort to raise awareness
 between making the [API][api] available and default BFCacheing of CCNS documents.
 This will allow for more awareness
 and early opt-in by use of the cookie-monitoring [API][api].
-
-We may also consider not BFCaching
-if a document has no HTTPS-only cookies
-as this would lead to unconditional caching.
-In that case we would fall back to the more conservative approach
-of monitoring all cookies.
 
 ## Spec changes
 

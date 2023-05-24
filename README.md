@@ -387,17 +387,61 @@ the we are forced to assume it contains sensitive information.
 If the API is not available,
 either because it is not launched
 or because the user has disabled JS for this page
-then we take the most conservative approach
-and only allow pages to be restored if:
+then we take a conservative approach
 
-For every CCNS frame (main and sub)
-in a CCNS main document.
+A frame (main or sub) is considered a "safe" frame
+if all of the follow are true:
 
-- cookies are enabled and no cookies (of any kind)
+- the frame is not CCNS or
+  cookies are enabled and no HTTP-only cookies
   have changed since the document was fetched.
 - no RPCs with potentially sensitive information have occurred
   (CCNS on response)
 - none of the "always used" signals are present
+
+#### Proprosed approach
+
+We propose to allow a CCNS main frame
+to be restored from BFCache
+if it and all of its same-origin subframes
+are considered safe.
+
+#### More conservative approaches
+
+##### Cookies
+
+Instead of all HTTP-only cookies,
+we could only consider all cookies.
+Best practice for cookies
+used to access sensitive inforation
+is for them to be HTTP-only.
+This is also well-established, common practice,
+not just a theoretical best practice.
+Even still, it's likely some sites do not follow it.
+We know from previous measurements
+(based on cookies alone,
+ignoring RPCs)
+that about 50% of CCNS have a cookie change
+while in BFCache for up to 3.5 minutes
+but only 5% have a HTTP-only cookie change.
+
+##### Subframes
+
+Instead of only subframes
+which are same-origin with the main frame,
+we could consider all subframes.
+The risk here is that there are cross-origin subframes
+that contain sensitive information
+and the user could deauthenticate
+from that site in another tab
+(or in the same tab while the page is in BFCache)
+and then be surprised to find sensitive information
+visible after the page in question is restored.
+
+Many sites disallow embedding in a subframe
+specifically because they contain senstive information
+and allowing embedding leads to security problems.
+We are unaware of examples of this.
 
 ### Allow more CCNS documents to be BFCached with the API
 

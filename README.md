@@ -399,6 +399,21 @@ if all of the follow are true:
   (CCNS on response)
 - none of the "always used" signals are present
 
+### Timeout
+
+Chrome's current timeout for BFCache entries is 10 minutes.
+WebKit and Mozilla have longer timeouts,
+up to 45 minutes.
+We proprose that a CCNS page
+should not be restored after 3 minutes.
+This is to address the fact that
+
+- CCNS may be used for freshness
+  rather than for protecting sensitive information
+- access to sensitive information
+  may be revoked at the server side
+  without any signal to the browser
+
 #### Proprosed approach
 
 We propose to allow a CCNS main frame

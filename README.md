@@ -225,11 +225,13 @@ being provided through RPCs.
 The OAuth [spec](https://datatracker.ietf.org/doc/html/rfc6750#section-5.3) recommends
 not to pass access tokens in the URL,
 to use the `Authorization` header instead.
-Twitter and Facebook accept access tokens in the URL,
+However, Twitter and Facebook accept access tokens in the URL,
 this practice is suggested on Stack Exchange
 and Facebook's JS client library
-put the tokens in the URL.
-We must assume that passing authentication tokens in the URL
+*always* puts access tokens in the URL.
+We must assume that,
+despite the RFC's recommendation,
+passing authentication tokens in the URL
 is common practice.
 For OAuth,
 the token in the URL is standardized
@@ -238,8 +240,8 @@ but we cannot assume that OAuth
 is the only authentication scheme.
 
 This means that in practice,
-we cannot use the absence of the `Authorization` header
-as a signal that an RPC contains no sensitive information.
+we cannot distinguish RPCs made with authorizatoin
+from RPCs made without.
 
 ##### Storage
 
@@ -300,6 +302,14 @@ but the document for their account
 was still in BFCache.
 
 ## Detailed Proposal
+
+Our goal is to identify pages
+which can safely be restored from BFCache
+even though the main frame was delivered with CCNS.
+To do this,
+we consider the sources of sensitive information
+and signals which tell us that this information
+could not be refetched by the browser.
 
 Getting to the point where we can BFCache
 many documents with CCNS
@@ -395,8 +405,17 @@ if all of the follow are true:
 - the frame is not CCNS or
   cookies are enabled and no HTTP-only cookies
   have changed since the document was fetched.
+  If cookies have changed,
+  we conservatively take that to mean
+  that the browser is no longer authorized
+  to access the content.
 - no RPCs with potentially sensitive information have occurred
-  (CCNS on response)
+  (CCNS on response).
+  Since we have no way to tell if an RPC
+  was authorized or not,
+  we conservatively assume that any RPC with CCNS on the response
+  contains sensitive information
+  that could not be refetched later.
 - none of the "always used" signals are present
 
 ### Timeout
@@ -554,6 +573,20 @@ Our goal is to avoid exposing sensitive information
 and we expect that to be tied to secure cookies.
 These sites can use the new [API][api]
 and can also use any of the mitigitations for [stale information](#stale-information).
+
+### Sensitive information in non-CCNS RPCs responses
+
+It is possible that an RPC response does not have CCNS
+despite containing sensitive information.
+This would allow the sensitive information
+to be cached stored on disk
+while the page containing it is not.
+This seems like it would have to be an error by the site.
+
+That said, such errors may occur
+and our proposal could reveal that error
+which was previous mitigated
+by having CCNS on the main page.
 
 ## Security considerations
 

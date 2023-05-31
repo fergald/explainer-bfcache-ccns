@@ -72,7 +72,7 @@ the other a simple, explicit eviction API.
 With either of these available
 we believe browsers can safely make a [follow-on change][follow-on-proposal]
 to allow most CCNS documents into BFCache by monitoring cookies
-and usage of the `Authorization` header
+and usage of CCNS on RPC responses
 and then evicting documents when secure cookies change.
 This gives page authors finer-grained control
 allowing them to avoid over-eviction.

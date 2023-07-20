@@ -73,7 +73,7 @@ With either of these available
 we believe browsers can safely make a [follow-on change][follow-on-proposal]
 to allow most CCNS documents into BFCache by monitoring cookies
 and usage of CCNS on RPC responses
-and then evicting documents when secure cookies change.
+and then evicting documents when HttpOnly cookies change.
 This gives page authors finer-grained control
 allowing them to avoid over-eviction.
 
@@ -88,10 +88,10 @@ CCNS is the single largest reason blocking documents from being BFCached on mobi
 (18% blocked by only this reason)
 and the second largest reason on desktop (7% blocked by only this reason).
 However, in Chrome's experiments,
-less than 1% of documents with CCNS saw a HTTPS-only-cookie change during the 3m30s BFCaching window.
+less than 1% of documents with CCNS saw an HttpOnly cookie change during the 3m30s BFCaching window.
 On Chrome mobile,
 if all CCNS documents were cacheable
-and only evicted on HTTPS-only-cookie change,
+and only evicted on HttpOnly cookie change,
 then we would see an increase in the BFCache hit-rate
 of about 14 percentage points
 (3% of all navigations would become BFCache navigations).
@@ -166,11 +166,11 @@ The sources of senstive data we consider are
 
 ### Authorization
 
-#### Secure cookies
+#### HttpOnly cookies
 
 Best practice for authorization has been,
 for a long time,
-to hold a token in an HTTPS-only cookie
+to hold a token in an HttpOnly cookie
 so that all requests present this token.
 Deleting this cookie deauthenticates the browser
 and usually corresponds to a logout.
@@ -186,7 +186,7 @@ even if it does not correspond to a logout.
 
 #### Other cookies
 
-Other non-auth or non-HTTPS-only cookies may also be significant to a page
+Other non-auth or non-HttpOnly cookies may also be significant to a page
 e.g. representing contents of shopping carts.
 Changes to these may also imply that inactive pages in BFCache or prerendering
 have outdated/incorrect contents.
@@ -196,11 +196,11 @@ to consider all cookies on CCNS documents
 as potentially guarding access
 to sensitive information.
 We are not aware of any reasons why
-sites would use insecure cookies
+sites would use non-HttpOnly cookies only
 for this purpose
 and it is very poor security practice to do so.
 As a result we aim for an end-state
-where only secure cookies are considered.
+where only HttpOnly cookies are considered.
 
 #### Access tokens
 
@@ -322,7 +322,7 @@ Those paths are essentially
     using the most conservative criteria](#allow-ccns-documents-to-be-bfcached-without-the-api)
   - [introduce the API](#allow-more-ccns-documents-to-be-bfcached-with-the-api)
   - [cache more CCNS pages by default
-    by adding the API to the criteria](#bfcache-ccns-pages-if-https-only-cookies-dont-change)
+    by adding the API to the criteria](#bfcache-ccns-pages-if-http-only-cookies-dont-change)
 - API-first (dropped in favour of caching-first)
   - introduce the API
   - move to caching some CCNS pages
@@ -502,13 +502,13 @@ This allows sites to
   of declaring a list of cookies
   or storage locations to monitor
 
-### BFCache CCNS pages if HTTPS-only cookies don't change
+### BFCache CCNS pages if HttpOnly cookies don't change
 
 This is the ultimate combination.
 
 With the [API][api] available,
 when no cookies are declared via the API
-we only consider changes to secure cookies
+we only consider changes to HttpOnly cookies
 as preventing BFCacheing.
 
 This would happen some time after the [API][api] is stable.
@@ -564,13 +564,13 @@ that detects `event.persisted == true`
 and either performs client-side updates to the page's
 content, or causes a reload.
 
-### Non-HTTPS-Only (non-secure) Cookies
+### Non-HttpOnly Cookies
 
-Documents may have content that depends on non-secure cookies
-and by only evicting on changes to secure cookies
+Documents may have content that depends on non-HttpOnly cookies
+and by only evicting on changes to HttpOnly cookies
 we may restore some pages that should not be restored.
 Our goal is to avoid exposing sensitive information
-and we expect that to be tied to secure cookies.
+and we expect that to be tied to HttpOnly cookies.
 These sites can use the new [API][api]
 and can also use any of the mitigitations for [stale information](#stale-information).
 
